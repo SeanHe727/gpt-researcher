@@ -1,351 +1,119 @@
-<div align="center" id="top">
+# GPT Researcher Evaluation Infrastructure
 
-<img src="https://github.com/assafelovic/gpt-researcher/assets/13554167/20af8286-b386-44a5-9a83-3be1365139c3" alt="Logo" width="80">
+This repository is an evaluation-focused fork of [assafelovic/gpt-researcher](https://github.com/assafelovic/gpt-researcher).
 
-####
+GPT Researcher is an open-source autonomous research agent for web and local research. It gathers sources, synthesizes context, and generates long-form reports with citations. This fork keeps the original project as the research backbone and focuses on building evaluation infrastructure around the reports produced by the agent.
 
-[![Website](https://img.shields.io/badge/Official%20Website-gptr.dev-teal?style=for-the-badge&logo=world&logoColor=white&color=0891b2)](https://gptr.dev)
-[![Documentation](https://img.shields.io/badge/Documentation-DOCS-f472b6?logo=googledocs&logoColor=white&style=for-the-badge)](https://docs.gptr.dev)
-[![Discord](https://img.shields.io/discord/1127851779011391548?logo=discord&logoColor=white&label=Discord&color=34b76a&style=for-the-badge)](https://discord.gg/QgZXvJAccX)
+The original upstream README is preserved at [README-upstream.md](README-upstream.md).
 
+## My Work
 
-[![PyPI version](https://img.shields.io/pypi/v/gpt-researcher?logo=pypi&logoColor=white&style=flat)](https://badge.fury.io/py/gpt-researcher)
-![GitHub Release](https://img.shields.io/github/v/release/assafelovic/gpt-researcher?style=flat&logo=github)
-[![Open In Colab](https://img.shields.io/static/v1?message=Open%20in%20Colab&logo=googlecolab&labelColor=grey&color=yellow&label=%20&style=flat&logoSize=40)](https://colab.research.google.com/github/assafelovic/gpt-researcher/blob/master/docs/docs/examples/pip-run.ipynb)
-[![Docker Image Version](https://img.shields.io/docker/v/elestio/gpt-researcher/latest?arch=amd64&style=flat&logo=docker&logoColor=white&color=1D63ED)](https://hub.docker.com/r/gptresearcher/gpt-researcher)
-[![Skill](https://img.shields.io/badge/Claude%20Skill-skills.sh-blueviolet?style=flat&logo=anthropic&logoColor=white)](https://skills.sh/assafelovic/gpt-researcher/gpt-researcher)
-[![Twitter Follow](https://img.shields.io/twitter/follow/assaf_elovic?style=social)](https://twitter.com/assaf_elovic)
+**My work is contributed to eval infrastructure: factual evaluation, report-quality metrics, standardized metric execution, perturbation validation, unit tests, and lightweight benchmarking.**
 
-[English](README.md) | [中文](README-zh_CN.md) | [日本語](README-ja_JP.md) | [한국어](README-ko_KR.md)
+### 1. Simple Factual Evaluation
 
-</div>
+Based on the OpenAI SimpleQA evaluation idea, `simple_evals` measures factual accuracy with ground-truth answers.
 
-# 🔎 GPT Researcher
+- Evaluates factual correctness for short-form QA tasks.
+- Tracks accuracy, F1, answer rate, cost, latency, and source coverage.
+- Writes structured JSONL logs so later eval runs can be compared consistently.
+- Provides the foundation for repeatable factual evaluation before moving into broader report-quality evaluation.
 
-**GPT Researcher the first open deep research agent designed for both web and local research on any given task.** 
+### 2. Standardized Evaluation Framework
 
-The agent produces detailed, factual, and unbiased research reports with citations. GPT Researcher provides a full suite of customization options to create tailor made and domain specific research agents. Inspired by the recent [Plan-and-Solve](https://arxiv.org/abs/2305.04091) and [RAG](https://arxiv.org/abs/2005.11401) papers, GPT Researcher addresses misinformation, speed, determinism, and reliability by offering stable performance and increased speed through parallelized agent work.
+The quality-eval layer follows the structure of DeepEval / RAGAS-style metric systems, while adapting it to autonomous research agents.
 
-**Our mission is to empower individuals and organizations with accurate, unbiased, and factual information through AI.**
+- Uses schema-like abstractions: `EvalSample`, `BaseMetric`, and `MetricResult`.
+- Standardizes metric outputs with `score`, `group`, `aligned_with`, `reason`, `breakdown`, and `skipped`.
+- Keeps all primary scores as **higher is better**, making aggregation and comparison easier.
+- Separates raw metric logic from metric wrappers, so metrics can be unit-tested directly and also run through a consistent suite interface.
 
-## Why GPT Researcher?
+### 3. Report-Quality Metrics
 
-- Objective conclusions for manual research can take weeks, requiring vast resources and time.
-- LLMs trained on outdated information can hallucinate, becoming irrelevant for current research tasks.
-- Current LLMs have token limitations, insufficient for generating long research reports.
-- Limited web sources in existing services lead to misinformation and shallow results.
-- Selective web sources can introduce bias into research tasks.
+The metrics are organized into four groups so the evaluation is easy to understand at both a high level and a technical level.
 
-## Demo
-<a href="https://www.youtube.com/watch?v=f60rlc_QCxE" target="_blank" rel="noopener">
-  <img src="https://github.com/user-attachments/assets/ac2ec55f-b487-4b3f-ae6f-b8743ad296e4" alt="Demo video" width="800" target="_blank" />
-</a>
+- **Faithfulness**
+  - `unsupported_claim`: extracts report claims and classifies each one as `supported`, `inferred`, or `unsupported` against source context.
+  - `hallucination`: optional binary check that compares report content against scraped source text.
+- **Answer Relevancy**
+  - `subtopic_coverage`: uses an LLM judge to check whether the report covers the expected subtopics for the query.
+- **Source Quality**
+  - `source_diversity`: measures domain variety using unique-domain ratio and Shannon entropy.
+  - `source_authority`: scores source reliability with high-confidence rules and optional LLM scoring for unknown domains.
+- **Citation**
+  - `citation_faithfulness`: checks whether sources listed in `## References` are actually cited in the report body, catching decorative or unused references.
 
-## Install as Claude Skill
+### 4. Unit Tests for Metrics
 
-Extend Claude's deep research capabilities by installing GPT Researcher as a [Claude Skill](https://skills.sh/assafelovic/gpt-researcher/gpt-researcher):
+`tests/test_quality_metrics.py` validates the metric layer with focused tests.
 
-```bash
-npx skills add assafelovic/gpt-researcher
-```
+- Covers empty inputs, boundary cases, citation parsing, source-diversity math, and source-authority rule ordering.
+- Mocks LLM responses for subtopic coverage and unsupported-claim evaluation.
+- Tests bad JSON, LLM failure fallback, skipped metrics, and standardized metric wrapper behavior.
+- Includes regression coverage for domain normalization, including the `www.` prefix handling bug.
 
-Once installed, Claude can leverage GPT Researcher's deep research capabilities directly within your conversations.
+### 5. Perturbation Testing for Metric Reliability
 
-## Architecture
+`evals/quality_eval/perturbation.py` validates whether metrics move in the expected direction when report quality is deliberately degraded.
 
-The core idea is to utilize 'planner' and 'execution' agents. The planner generates research questions, while the execution agents gather relevant information. The publisher then aggregates all findings into a comprehensive report.
+- Removes inline citations to verify `citation_faithfulness` drops.
+- Replaces authoritative sources with weaker sources to verify `source_authority` drops.
+- Collapses sources onto a single domain to verify `source_diversity` drops.
+- Removes report sections to verify `subtopic_coverage` drops.
+- Corrupts factual claims to verify unsupported-claim detection becomes stricter.
 
-<div align="center">
-<img align="center" height="600" src="https://github.com/assafelovic/gpt-researcher/assets/13554167/4ac896fd-63ab-4b77-9688-ff62aafcc527">
-</div>
+**This checks metric reliability, not just implementation correctness: if the input gets worse, the corresponding metric should respond predictably.**
 
-Steps:
-* Create a task-specific agent based on a research query.
-* Generate questions that collectively form an objective opinion on the task.
-* Use a crawler agent for gathering information for each question.
-* Summarize and source-track each resource.
-* Filter and aggregate summaries into a final research report.
+### 6. Lightweight Benchmarking
 
-## Tutorials
- - [How it Works](https://docs.gptr.dev/blog/building-gpt-researcher)
- - [How to Install](https://www.loom.com/share/04ebffb6ed2a4520a27c3e3addcdde20?sid=da1848e8-b1f1-42d1-93c3-5b0b9c3b24ea)
- - [Live Demo](https://www.loom.com/share/6a3385db4e8747a1913dd85a7834846f?sid=a740fd5b-2aa3-457e-8fb7-86976f59f9b8)
+`evals/quality_eval/benchmark.py` compares different researcher configurations across a fixed topic set.
 
-## Features
+- Compares single-agent and multi-agent research flows.
+- Compares model choices such as `gpt-4o` and `gpt-4o-mini`.
+- Saves structured logs for later trend analysis.
+- Supports summary replay and run-to-run comparison.
 
-- 📝 Generate detailed research reports using web and local documents.
-- 🖼️ Smart image scraping and filtering for reports.
-- 🍌 **AI-generated inline images** using Google Gemini (Nano Banana) for visual illustrations.
-- 📜 Generate detailed reports exceeding 2,000 words.
-- 🌐 Aggregate over 20 sources for objective conclusions.
-- 🖥️ Frontend available in lightweight (HTML/CSS/JS) and production-ready (NextJS + Tailwind) versions.
-- 🔍 JavaScript-enabled web scraping.
-- 📂 Maintains memory and context throughout research.
-- 📄 Export reports to PDF, Word, and other formats.
+## File Structure
 
-## 📖 Documentation
+| Path | Purpose |
+| --- | --- |
+| `README.md` | Main README for this evaluation-focused fork. |
+| `README-upstream.md` | Preserved original GPT Researcher README for upstream reference and future PR work. |
+| `evals/README.md` | Overview of the three evaluation systems: simple evals, quality evals, and hallucination evals. |
+| `evals/simple_evals/simpleqa_eval.py` | SimpleQA-style grading logic for factual correctness. |
+| `evals/simple_evals/run_eval.py` | Runs factual QA evaluation and records accuracy, F1, cost, latency, answer rate, and source coverage. |
+| `evals/simple_evals/example_output.json` | Example structured output schema for SimpleQA-style logs. |
+| `evals/simple_evals/logs/` | Versioned evaluation histories in text and JSONL formats. |
+| `evals/simple_evals/problems/` | Ground-truth factual QA dataset for the simple evaluation runner. |
+| `evals/quality_eval/README.md` | Detailed documentation for the report-quality evaluation framework. |
+| `evals/quality_eval/base.py` | Evaluation abstractions: `EvalSample`, `BaseMetric`, `MetricResult`, and metric groups. |
+| `evals/quality_eval/suite.py` | Standardized metric wrappers and the `evaluate()` entry point. |
+| `evals/quality_eval/metrics.py` | Core implementations for citation, source quality, subtopic coverage, and unsupported-claim metrics. |
+| `evals/quality_eval/run_eval.py` | Runs GPT Researcher reports through the quality metric suite and writes structured logs. |
+| `evals/quality_eval/benchmark.py` | Compares different agent/model configurations across a fixed benchmark topic set. |
+| `evals/quality_eval/perturbation.py` | Degrades reports and sources to test whether metrics respond in the expected direction. |
+| `evals/quality_eval/fixtures/` | Stored report fixtures used by perturbation reliability checks. |
+| `evals/quality_eval/logs/` | Structured quality-eval logs for experiment comparison and trend analysis. |
+| `evals/quality_eval/requirements.txt` | Additional dependencies for quality evaluation. |
+| `evals/hallucination_eval/evaluate.py` | Hallucination evaluator used by the optional hallucination metric. |
+| `evals/hallucination_eval/inputs/` | Query inputs used by hallucination and quality-eval runners. |
+| `tests/test_quality_metrics.py` | Unit tests for quality metrics, metric wrappers, error handling, and regression cases. |
 
-See the [Documentation](https://docs.gptr.dev/docs/gpt-researcher/getting-started) for:
-- Installation and setup guides
-- Configuration and customization options
-- How-To examples
-- Full API references
-
-## ⚙️ Getting Started
-
-### Installation
-
-1. Install Python 3.11 or later. [Guide](https://www.tutorialsteacher.com/python/install-python).
-2. Clone the project and navigate to the directory:
-
-    ```bash
-    git clone https://github.com/assafelovic/gpt-researcher.git
-    cd gpt-researcher
-    ```
-
-3. Set up API keys by exporting them or storing them in a `.env` file.
-
-    ```bash
-    export OPENAI_API_KEY={Your OpenAI API Key here}
-    export TAVILY_API_KEY={Your Tavily API Key here}
-    ```
-
-    (Optional) For enhanced tracing and observability, you can also set:
-    
-    ```bash
-    # export LANGCHAIN_TRACING_V2=true
-    # export LANGCHAIN_API_KEY={Your LangChain API Key here}
-    ```
-
-    For custom OpenAI-compatible APIs (e.g., local models, other providers), you can also set:
-    
-    ```bash
-    export OPENAI_BASE_URL={Your custom API base URL here}
-    ```
-
-4. Install dependencies and start the server:
-
-    ```bash
-    pip install -r requirements.txt
-    python -m uvicorn main:app --reload
-    ```
-
-Visit [http://localhost:8000](http://localhost:8000) to start.
-
-For other setups (e.g., Poetry or virtual environments), check the [Getting Started page](https://docs.gptr.dev/docs/gpt-researcher/getting-started).
-
-## Run as PIP package
-```bash
-pip install gpt-researcher
-
-```
-### Example Usage:
-```python
-...
-from gpt_researcher import GPTResearcher
-
-query = "why is Nvidia stock going up?"
-researcher = GPTResearcher(query=query)
-# Conduct research on the given query
-research_result = await researcher.conduct_research()
-# Write the report
-report = await researcher.write_report()
-...
-```
-
-**For more examples and configurations, please refer to the [PIP documentation](https://docs.gptr.dev/docs/gpt-researcher/gptr/pip-package) page.**
-
-### 🔧 MCP Client
-GPT Researcher supports MCP integration to connect with specialized data sources like GitHub repositories, databases, and custom APIs. This enables research from data sources alongside web search.
+## Common Commands
 
 ```bash
-export RETRIEVER=tavily,mcp  # Enable hybrid web + MCP research
+# Run SimpleQA-style factual evaluation
+python -m evals.simple_evals.run_eval --num_examples 10
+
+# Run zero-cost report-quality metrics
+python -m evals.quality_eval.run_eval --num_examples 10 --no-subtopic --no-hallucination --no-unsupported-claim
+
+# Run full report-quality evaluation
+python -m evals.quality_eval.run_eval --num_examples 5
+
+# Run perturbation reliability checks
+python -m evals.quality_eval.perturbation
+
+# Run unit tests
+python -m pytest tests/test_quality_metrics.py
 ```
-
-```python
-from gpt_researcher import GPTResearcher
-import asyncio
-import os
-
-async def mcp_research_example():
-    # Enable MCP with web search
-    os.environ["RETRIEVER"] = "tavily,mcp"
-    
-    researcher = GPTResearcher(
-        query="What are the top open source web research agents?",
-        mcp_configs=[
-            {
-                "name": "github",
-                "command": "npx",
-                "args": ["-y", "@modelcontextprotocol/server-github"],
-                "env": {"GITHUB_TOKEN": os.getenv("GITHUB_TOKEN")}
-            }
-        ]
-    )
-    
-    research_result = await researcher.conduct_research()
-    report = await researcher.write_report()
-    return report
-```
-
-> For comprehensive MCP documentation and advanced examples, visit the [MCP Integration Guide](https://docs.gptr.dev/docs/gpt-researcher/retrievers/mcp-configs).
-
-## 🍌 Inline Image Generation
-
-GPT Researcher can automatically generate and embed AI-created illustrations in your research reports using Google's Gemini models (Nano Banana).
-
-```bash
-# Enable in your .env file
-IMAGE_GENERATION_ENABLED=true
-GOOGLE_API_KEY=your_google_api_key
-IMAGE_GENERATION_MODEL=models/gemini-2.5-flash-image
-```
-
-When enabled, the system will:
-1. Analyze your research context to identify visualization opportunities
-2. Pre-generate 2-3 relevant images during the research phase
-3. Embed them inline as the report is written
-
-Images are generated with dark-mode styling that matches the GPT Researcher UI, featuring professional infographic aesthetics with teal accents.
-
-[Learn more about Image Generation](https://docs.gptr.dev/docs/gpt-researcher/gptr/image_generation) in our documentation.
-
-## ✨ Deep Research
-
-GPT Researcher now includes Deep Research - an advanced recursive research workflow that explores topics with agentic depth and breadth. This feature employs a tree-like exploration pattern, diving deeper into subtopics while maintaining a comprehensive view of the research subject.
-
-- 🌳 Tree-like exploration with configurable depth and breadth
-- ⚡️ Concurrent processing for faster results
-- 🤝 Smart context management across research branches
-- ⏱️ Takes ~5 minutes per deep research
-- 💰 Costs ~$0.4 per research (using `o3-mini` on "high" reasoning effort)
-
-[Learn more about Deep Research](https://docs.gptr.dev/docs/gpt-researcher/gptr/deep_research) in our documentation.
-
-## Run with Docker
-
-> **Step 1** - [Install Docker](https://docs.gptr.dev/docs/gpt-researcher/getting-started/getting-started-with-docker)
-
-> **Step 2** - Clone the '.env.example' file, add your API Keys to the cloned file and save the file as '.env'
-
-> **Step 3** - Within the docker-compose file comment out services that you don't want to run with Docker.
-
-```bash
-docker-compose up --build
-```
-
-If that doesn't work, try running it without the dash:
-```bash
-docker compose up --build
-```
-
-> **Step 4** - By default, if you haven't uncommented anything in your docker-compose file, this flow will start 2 processes:
- - the Python server running on localhost:8000<br>
- - the React app running on localhost:3000<br>
-
-Visit localhost:3000 on any browser and enjoy researching!
-
-
-## 📄 Research on Local Documents
-
-You can instruct the GPT Researcher to run research tasks based on your local documents. Currently supported file formats are: PDF, plain text, CSV, Excel, Markdown, PowerPoint, and Word documents.
-
-Step 1: Add the env variable `DOC_PATH` pointing to the folder where your documents are located.
-
-```bash
-export DOC_PATH="./my-docs"
-```
-
-Step 2: 
- - If you're running the frontend app on localhost:8000, simply select "My Documents" from the "Report Source" Dropdown Options.
- - If you're running GPT Researcher with the [PIP package](https://docs.tavily.com/guides/gpt-researcher/gpt-researcher#pip-package), pass the `report_source` argument as "local" when you instantiate the `GPTResearcher` class [code sample here](https://docs.gptr.dev/docs/gpt-researcher/context/tailored-research).
-
-
-## 🤖 MCP Server
-
-We've moved our MCP server to a dedicated repository: [gptr-mcp](https://github.com/assafelovic/gptr-mcp).
-
-The GPT Researcher MCP Server enables AI applications like Claude to conduct deep research. While LLM apps can access web search tools with MCP, GPT Researcher MCP delivers deeper, more reliable research results.
-
-Features:
-- Deep research capabilities for AI assistants
-- Higher quality information with optimized context usage
-- Comprehensive results with better reasoning for LLMs
-- Claude Desktop integration
-
-For detailed installation and usage instructions, please visit the [official repository](https://github.com/assafelovic/gptr-mcp).
-
-
-## 👪 Multi-Agent Assistant
-As AI evolves from prompt engineering and RAG to multi-agent systems, we're excited to introduce multi-agent assistants built with [LangGraph](https://python.langchain.com/v0.1/docs/langgraph/) and [AG2](https://github.com/ag2ai/ag2).
-
-By using multi-agent frameworks, the research process can be significantly improved in depth and quality by leveraging multiple agents with specialized skills. Inspired by the recent [STORM](https://arxiv.org/abs/2402.14207) paper, this project showcases how a team of AI agents can work together to conduct research on a given topic, from planning to publication.
-
-An average run generates a 5-6 page research report in multiple formats such as PDF, Docx and Markdown.
-
-Check it out [here](https://github.com/assafelovic/gpt-researcher/tree/master/multi_agents) or head over to our documentation for [LangGraph](https://docs.gptr.dev/docs/gpt-researcher/multi_agents/langgraph) and [AG2](https://docs.gptr.dev/docs/gpt-researcher/multi_agents/ag2) for more information.
-
-## 🔍 Observability
-
-GPT Researcher supports **LangSmith** for enhanced tracing and observability, making it easier to debug and optimize complex multi-agent workflows.
-
-To enable tracing:
-1. Set the following environment variables:
-   ```bash
-   export LANGCHAIN_TRACING_V2=true
-   export LANGCHAIN_API_KEY=your_api_key
-   export LANGCHAIN_PROJECT="gpt-researcher"
-   ```
-2. Run your research tasks as usual. All LangGraph-based agent interactions will be automatically traced and visualized in your LangSmith dashboard.
-
-## 🖥️ Frontend Applications
-
-GPT-Researcher now features an enhanced frontend to improve the user experience and streamline the research process. The frontend offers:
-
-- An intuitive interface for inputting research queries
-- Real-time progress tracking of research tasks
-- Interactive display of research findings
-- Customizable settings for tailored research experiences
-
-Two deployment options are available:
-1. A lightweight static frontend served by FastAPI
-2. A feature-rich NextJS application for advanced functionality
-
-For detailed setup instructions and more information about the frontend features, please visit our [documentation page](https://docs.gptr.dev/docs/gpt-researcher/frontend/introduction).
-
-## 🚀 Contributing
-We highly welcome contributions! Please check out [contributing](https://github.com/assafelovic/gpt-researcher/blob/master/CONTRIBUTING.md) if you're interested.
-
-Please check out our [roadmap](https://trello.com/b/3O7KBePw/gpt-researcher-roadmap) page and reach out to us via our [Discord community](https://discord.gg/QgZXvJAccX) if you're interested in joining our mission.
-<a href="https://github.com/assafelovic/gpt-researcher/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=assafelovic/gpt-researcher&max=1000" />
-</a>
-## ✉️ Support / Contact us
-- [Community Discord](https://discord.gg/spBgZmm3Xe)
-- Author Email: assaf.elovic@gmail.com
-
-## 🛡 Disclaimer
-
-This project, GPT Researcher, is an experimental application and is provided "as-is" without any warranty, express or implied. We are sharing codes for academic purposes under the Apache 2 license. Nothing herein is academic advice, and NOT a recommendation to use in academic or research papers.
-
-Our view on unbiased research claims:
-1. The main goal of GPT Researcher is to reduce incorrect and biased facts. How? We assume that the more sites we scrape the less chances of incorrect data. By scraping multiple sites per research, and choosing the most frequent information, the chances that they are all wrong is extremely low.
-2. We do not aim to eliminate biases; we aim to reduce it as much as possible. **We are here as a community to figure out the most effective human/llm interactions.**
-3. In research, people also tend towards biases as most have already opinions on the topics they research about. This tool scrapes many opinions and will evenly explain diverse views that a biased person would never have read.
-
----
-
-<p align="center">
-<a href="https://star-history.com/#assafelovic/gpt-researcher">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=assafelovic/gpt-researcher&type=Date&theme=dark" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=assafelovic/gpt-researcher&type=Date" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=assafelovic/gpt-researcher&type=Date" />
-  </picture>
-</a>
-</p>
-
-
-<p align="right">
-  <a href="#top">⬆️ Back to Top</a>
-</p>

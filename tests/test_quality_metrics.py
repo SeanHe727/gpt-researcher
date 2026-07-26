@@ -23,6 +23,13 @@ from evals.quality_eval.metrics import (
     evaluate_report,
     is_skipped,
 )
+from evals.quality_eval.base import EvalSample
+from evals.quality_eval.suite import (
+    CitationFaithfulnessMetric,
+    UnsupportedClaimMetric,
+    evaluate,
+    default_metrics,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -387,6 +394,53 @@ class TestEvaluateReport(unittest.IsolatedAsyncioTestCase):
         )
         self.assertTrue(is_skipped(result["unsupported_claim"]))
         mock.ainvoke.assert_not_called()  # empty context → skipped before any call
+
+
+# ---------------------------------------------------------------------------
+# 7. suite  (BaseMetric wrappers + evaluate() entry point)
+# ---------------------------------------------------------------------------
+
+class TestSuite(unittest.IsolatedAsyncioTestCase):
+
+    async def test_wrapper_standardizes_output_and_tags_metadata(self):
+        report = ("Findings ([n](https://nature.com/a)).\n\n"
+                  "## References\n- A, [nature.com](https://nature.com/a)\n")
+        sample = EvalSample(query="q", report=report,
+                            sources=["https://nature.com/a"], context="ctx")
+        r = await CitationFaithfulnessMetric().measure(sample)
+        self.assertEqual(r.name, "citation_faithfulness")
+        self.assertEqual(r.group, "Citation")
+        self.assertIn("ALCE", r.aligned_with)
+        self.assertEqual(r.score, 1.0)         # standardized scalar
+        self.assertFalse(r.skipped)
+        self.assertIn("listed_only_domains", r.breakdown)   # raw detail preserved
+
+    async def test_score_is_higher_is_better(self):
+        # unsupported metric exposes avg_claim_score (higher=better), NOT the rate
+        claims = ["A", "B"]
+        scored = [{"claim": "A", "category": "supported", "score": 1.0, "reason": "t"},
+                  {"claim": "B", "category": "supported", "score": 1.0, "reason": "t"}]
+        r = await UnsupportedClaimMetric().measure(
+            EvalSample(report="r", context="c"), _mock_unsupported(claims, scored))
+        self.assertEqual(r.score, 1.0)         # all supported → high score
+        self.assertEqual(r.group, "Faithfulness")
+
+    async def test_missing_context_skips_not_aborts(self):
+        r = await UnsupportedClaimMetric().measure(
+            EvalSample(report="r", context=""), grader_model=AsyncMock())
+        self.assertTrue(r.skipped)
+        self.assertIsNone(r.score)
+
+    async def test_evaluate_runs_selected_and_flags_gate(self):
+        sample = EvalSample(query="q", report="See https://nature.com/a",
+                            sources=["https://nature.com/a"], context="ctx")
+        results = await evaluate(
+            sample, default_metrics(run_subtopic=False, run_unsupported=False),
+            grader_model=AsyncMock())
+        self.assertEqual({r.name for r in results},
+                         {"citation_faithfulness", "source_diversity", "source_authority"})
+        for r in results:                       # every result is uniformly tagged
+            self.assertTrue(r.group and r.aligned_with)
 
 
 if __name__ == "__main__":

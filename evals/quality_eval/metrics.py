@@ -552,15 +552,6 @@ def is_skipped(value) -> bool:
     return isinstance(value, dict) and value.get("status") == "skipped"
 
 
-async def _safe(coro, name: str):
-    """Await a metric coroutine; on any exception return a skipped sentinel."""
-    try:
-        return await coro
-    except Exception as e:
-        print(f"   [WARN] {name} failed: {type(e).__name__}: {e}")
-        return skipped(f"{type(e).__name__}: {e}")
-
-
 async def evaluate_report(
     report: str,
     sources: list,
@@ -571,41 +562,22 @@ async def evaluate_report(
     run_subtopic: bool = True,
     run_unsupported: bool = True,
 ) -> dict:
-    """Compute all quality metrics for one report.
+    """Backwards-compatible dict view over the standardized `suite.evaluate()`.
 
-    Each metric is wrapped so a failure becomes a `skipped()` sentinel rather
-    than aborting the whole evaluation. Returns a dict keyed by metric name;
-    callers add latency/cost/console output and any extra metrics (e.g.
-    run_eval's hallucination check). Zero-cost metrics always run; the two LLM
-    metrics are gated by the flags.
+    Returns `{metric_name: breakdown-dict | skipped-sentinel}`, plus `None` for
+    metrics gated off by the flags — the shape run_eval/benchmark already expect.
+    New code should prefer `suite.evaluate()`, which returns typed `MetricResult`
+    objects carrying group / score / concept-alignment metadata.
     """
-    out = {}
+    # Local import breaks the metrics.py <-> suite.py import cycle.
+    from evals.quality_eval.suite import evaluate as _suite_evaluate, default_metrics
+    from evals.quality_eval.base import EvalSample
 
-    try:
-        out["citation_faithfulness"] = citation_faithfulness(report, sources, context=context)
-    except Exception as e:
-        out["citation_faithfulness"] = skipped(str(e))
+    sample  = EvalSample(query=query, report=report, sources=sources, context=context)
+    results = await _suite_evaluate(
+        sample, default_metrics(run_subtopic, run_unsupported), grader_model)
 
-    try:
-        out["source_diversity"] = source_diversity(sources)
-    except Exception as e:
-        out["source_diversity"] = skipped(str(e))
-
-    out["source_authority"] = await _safe(
-        source_authority(sources, grader_model=grader_model), "source_authority"
-    )
-
-    out["subtopic_coverage"] = (
-        await _safe(subtopic_coverage(query, report, grader_model), "subtopic_coverage")
-        if run_subtopic else None
-    )
-
-    if run_unsupported:
-        out["unsupported_claim"] = (
-            skipped("no source context available") if not context
-            else await _safe(unsupported_claim(report, context, grader_model), "unsupported_claim")
-        )
-    else:
-        out["unsupported_claim"] = None
-
+    out = {r.name: (skipped(r.reason) if r.skipped else r.breakdown) for r in results}
+    out.setdefault("subtopic_coverage", None)     # None when gated off by flag
+    out.setdefault("unsupported_claim", None)
     return out
