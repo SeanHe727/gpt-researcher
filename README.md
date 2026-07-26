@@ -4,6 +4,10 @@ This repository is an evaluation-focused fork of [assafelovic/gpt-researcher](ht
 
 GPT Researcher is an open-source autonomous research agent for web and local research. It gathers sources, synthesizes context, and generates long-form reports with citations. This fork keeps the original project as the research backbone and focuses on building evaluation infrastructure around the reports produced by the agent.
 
+<div align="center">
+<img align="center" height="600" src="https://github.com/assafelovic/gpt-researcher/assets/13554167/4ac896fd-63ab-4b77-9688-ff62aafcc527">
+</div>
+
 The original upstream README is preserved at [README-upstream.md](README-upstream.md).
 
 ## My Work
