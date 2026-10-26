@@ -1,0 +1,923 @@
+<title>Eval Harness Findings</title>
+<style>
+  /* ---- tokens: light is the base, both dark paths redefine only these ---- */
+  :root {
+    --ground:      #F6F8F7;
+    --surface:     #FFFFFF;
+    --surface-alt: #EDF1EF;
+    --ink:         #161D1B;
+    --ink-soft:    #4A5551;
+    --ink-faint:   #79837F;
+    --rule:        #D8E0DC;
+    --rule-strong: #B6C3BE;
+    --accent:      #0F5348;
+    --accent-soft: #E2EFEA;
+    --warn:        #9A5F14;
+    --warn-soft:   #F7ECDA;
+    --dead:        #57536B;
+    --dead-soft:   #EAE8F0;
+    --shadow:      0 1px 2px rgba(22,29,27,.06), 0 8px 24px -16px rgba(22,29,27,.28);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #101513;
+      --surface:     #171E1C;
+      --surface-alt: #1E2725;
+      --ink:         #E8EFEC;
+      --ink-soft:    #A9B5B1;
+      --ink-faint:   #7A8783;
+      --rule:        #2A3532;
+      --rule-strong: #3D4A46;
+      --accent:      #5FC7B0;
+      --accent-soft: #17322D;
+      --warn:        #DCA65C;
+      --warn-soft:   #33261326;
+      --dead:        #A9A3C4;
+      --dead-soft:   #23212E;
+      --shadow:      0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:      #101513;
+    --surface:     #171E1C;
+    --surface-alt: #1E2725;
+    --ink:         #E8EFEC;
+    --ink-soft:    #A9B5B1;
+    --ink-faint:   #7A8783;
+    --rule:        #2A3532;
+    --rule-strong: #3D4A46;
+    --accent:      #5FC7B0;
+    --accent-soft: #17322D;
+    --warn:        #DCA65C;
+    --warn-soft:   #332613;
+    --dead:        #A9A3C4;
+    --dead-soft:   #23212E;
+    --shadow:      0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+  }
+
+  /* Latin glyphs take Georgia; CJK falls through to a proper screen sans. */
+  :root {
+    --face-head: Georgia, "Songti SC", "PingFang SC", "Microsoft YaHei", serif;
+    --face-body: "Segoe UI", -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    --face-data: ui-monospace, Consolas, "Cascadia Mono", "SF Mono", monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--face-body);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 0 24px 96px;
+  }
+
+  /* ---------------- masthead ---------------- */
+  .masthead {
+    border-bottom: 2px solid var(--ink);
+    padding: 56px 0 20px;
+    margin-bottom: 40px;
+  }
+  .eyebrow {
+    font-family: var(--face-data);
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 14px;
+  }
+  h1 {
+    font-family: var(--face-head);
+    font-size: clamp(30px, 5vw, 44px);
+    line-height: 1.15;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    text-wrap: balance;
+    margin: 0 0 14px;
+  }
+  .standfirst {
+    font-size: 17px;
+    color: var(--ink-soft);
+    max-width: 64ch;
+    margin: 0;
+  }
+
+  .runstrip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    margin-top: 28px;
+    border-top: 1px solid var(--rule);
+  }
+  .runstrip div {
+    flex: 1 1 150px;
+    padding: 14px 18px 14px 0;
+    border-right: 1px solid var(--rule);
+  }
+  .runstrip div:last-child { border-right: 0; }
+  .runstrip dt {
+    font-family: var(--face-data);
+    font-size: 10.5px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 4px;
+  }
+  .runstrip dd {
+    font-family: var(--face-data);
+    font-size: 20px;
+    font-variant-numeric: tabular-nums;
+    margin: 0;
+    color: var(--ink);
+  }
+
+  /* ---------------- sections ---------------- */
+  section { margin-top: 60px; }
+  h2 {
+    font-family: var(--face-head);
+    font-size: 25px;
+    font-weight: 600;
+    line-height: 1.25;
+    text-wrap: balance;
+    margin: 0 0 6px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--rule-strong);
+  }
+  h3 {
+    font-family: var(--face-body);
+    font-size: 15px;
+    font-weight: 650;
+    letter-spacing: .01em;
+    margin: 34px 0 10px;
+    color: var(--ink);
+  }
+  p { margin: 0 0 14px; max-width: 68ch; }
+  .lede { color: var(--ink-soft); margin-top: 14px; }
+  strong { font-weight: 650; }
+  code {
+    font-family: var(--face-data);
+    font-size: .88em;
+    background: var(--surface-alt);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  /* ---------------- tables ---------------- */
+  .scroll { overflow-x: auto; margin: 18px 0 6px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  caption {
+    caption-side: bottom;
+    text-align: left;
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    padding-top: 10px;
+    max-width: 68ch;
+  }
+  th, td {
+    text-align: left;
+    padding: 9px 14px 9px 0;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: baseline;
+    white-space: nowrap;
+  }
+  thead th {
+    font-family: var(--face-data);
+    font-size: 10.5px;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 500;
+    border-bottom: 1px solid var(--rule-strong);
+    padding-bottom: 7px;
+  }
+  tbody th { font-weight: 500; white-space: normal; min-width: 12ch; }
+  .num {
+    font-family: var(--face-data);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    padding-right: 20px;
+  }
+  thead .num { text-align: right; }
+  .lead-val { color: var(--accent); font-weight: 600; }
+  .warn-val { color: var(--warn); font-weight: 600; }
+  .dim { color: var(--ink-faint); }
+  tr.total td, tr.total th {
+    border-top: 1px solid var(--rule-strong);
+    border-bottom: none;
+    font-weight: 650;
+  }
+
+  /* ---------------- verdict chips ---------------- */
+  .chip {
+    display: inline-block;
+    font-family: var(--face-data);
+    font-size: 10px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+  .chip-fixed   { background: var(--accent-soft); color: var(--accent); }
+  .chip-open    { background: var(--warn-soft);   color: var(--warn); }
+  .chip-refuted { background: var(--dead-soft);   color: var(--dead); }
+
+  /* ---------------- callout ---------------- */
+  .callout {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: 3px;
+    padding: 18px 22px;
+    margin: 24px 0;
+    box-shadow: var(--shadow);
+  }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout .tag {
+    font-family: var(--face-data);
+    font-size: 10.5px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 8px;
+  }
+  .callout.caution { border-left-color: var(--warn); }
+  .callout.caution .tag { color: var(--warn); }
+
+  /* ---------------- finding list ---------------- */
+  .findings { display: flex; flex-direction: column; gap: 0; margin-top: 20px; }
+  .finding {
+    display: grid;
+    grid-template-columns: 46px 1fr auto;
+    gap: 4px 16px;
+    align-items: baseline;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .finding .id {
+    font-family: var(--face-data);
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .finding .body { grid-column: 2; }
+  .finding .body p { margin: 6px 0 0; font-size: 14.5px; color: var(--ink-soft); }
+  .finding .title { font-weight: 600; font-size: 15px; }
+  .finding .ev {
+    grid-column: 2;
+    font-family: var(--face-data);
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    margin-top: 8px;
+  }
+
+  ul { margin: 10px 0 14px; padding-left: 20px; max-width: 68ch; }
+  li { margin-bottom: 7px; }
+
+  footer {
+    margin-top: 72px;
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+    font-size: 13px;
+    color: var(--ink-faint);
+    max-width: 68ch;
+  }
+  @media (max-width: 620px) {
+    .finding { grid-template-columns: 40px 1fr; }
+    .finding > .chip { grid-column: 2; justify-self: start; margin-top: 8px; }
+  }
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">gpt-researcher · quality_eval</p>
+  <h1>评估套件与管线的一次全面体检</h1>
+  <p class="standfirst">
+    对 5 个指标做受控退化标定，再对研究管线分层插桩。结果：一个截断常量制造了整套指标里最大的"发现"，
+    而真正的架构缺陷藏在没人测量的抓取层。
+  </p>
+
+  <dl class="runstrip">
+    <div><dt>插桩运行</dt><dd>25</dd></div>
+    <div><dt>受控实验</dt><dd>10</dd></div>
+    <div><dt>单元测试</dt><dd>39 → 51</dd></div>
+    <div><dt>已修缺陷</dt><dd>4</dd></div>
+    <div><dt>研究调用花费</dt><dd>$0.044</dd></div>
+  </dl>
+</header>
+
+<section>
+  <h2>一句话结论</h2>
+  <p class="lede">
+    <code>unsupported_claim</code> 长期报出 45–66% 的"无据断言率"，看起来是 agent 在编造内容，
+    有机制解释、有理论支撑、故事自洽。<strong>它是假的。</strong>
+    真实原因是评分前把证据截断到 4000 字符，而管线给出的 context 有 32–44k 字符。
+    给全量证据，29 条断言全部有据。
+  </p>
+  <p>
+    与此同时，真正的架构缺陷在一个从未被测量的地方：抓取层。
+    权威源（<code>.gov</code>、学术出版商）的抓取失败率是普通源的 3.2 倍，
+    而源质量指标恰好把这些从未读到的源计入了平均分——<strong>指标在替管线掩盖缺陷。</strong>
+  </p>
+</section>
+
+<section>
+  <h2>修复前后</h2>
+  <p class="lede">四个评估缺陷已修复并提交，每一条都有前后对照数据。</p>
+
+  <div class="scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>缺陷</th>
+        <th class="num">修复前</th>
+        <th class="num">修复后</th>
+        <th>验证方式</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th>证据截断 <code>4000</code> → <code>50000</code></th>
+        <td class="num warn-val">0.659</td>
+        <td class="num lead-val">0.000</td>
+        <td>固定断言集，只改窗口</td>
+      </tr>
+      <tr>
+        <th>子话题判定混入参考文献</th>
+        <td class="num warn-val">0.381</td>
+        <td class="num lead-val">0.000</td>
+        <td>空报告的假阳性地板</td>
+      </tr>
+      <tr>
+        <th>期望子话题每次重新生成</th>
+        <td class="num warn-val">±0.10</td>
+        <td class="num lead-val">0</td>
+        <td>同 query 重复评分的漂移</td>
+      </tr>
+      <tr>
+        <th>源指标计入未抓取成功的源</th>
+        <td class="num warn-val">+0.066</td>
+        <td class="num lead-val">0</td>
+        <td>权威分虚高幅度</td>
+      </tr>
+    </tbody>
+  </table>
+  <caption>前两行是率值（越低越好），后两行是误差幅度。四条均已提交至 <code>eval-metric-fixes</code> 分支，PR #1821 未受影响。</caption>
+  </div>
+
+  <h3>截断消融：整个信号都来自那一个常量</h3>
+  <div class="scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>报告</th>
+        <th class="num">context 实际长度</th>
+        <th class="num">4000</th>
+        <th class="num">8000</th>
+        <th class="num">12000</th>
+        <th class="num">24000</th>
+        <th class="num">全量</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><th>medical</th><td class="num dim">41,405</td><td class="num">0.778</td><td class="num">0.667</td><td class="num">0.556</td><td class="num">0.111</td><td class="num lead-val">0.000</td></tr>
+      <tr><th>ai_tech</th><td class="num dim">44,298</td><td class="num">0.600</td><td class="num">0.500</td><td class="num">0.400</td><td class="num">0.300</td><td class="num lead-val">0.000</td></tr>
+      <tr><th>legal</th><td class="num dim">32,468</td><td class="num">0.600</td><td class="num">0.500</td><td class="num">0.400</td><td class="num">0.000</td><td class="num lead-val">0.000</td></tr>
+      <tr class="total"><th>平均无据率</th><td class="num dim">—</td><td class="num warn-val">0.659</td><td class="num">0.556</td><td class="num">0.452</td><td class="num">0.137</td><td class="num lead-val">0.000</td></tr>
+    </tbody>
+  </table>
+  <caption>同一份报告、同一组断言、同一个 grader（gpt-4-turbo），唯一变量是评分时能看到多少证据。</caption>
+  </div>
+
+  <div class="callout caution">
+    <span class="tag">方法论教训</span>
+    <p>
+      一个 <code>4000</code> 的常量，制造了一个看起来完全合理的"架构缺陷"：45% 的无据率、有机制解释（抓取层丢数据源）、
+      有理论支撑（写作 prompt 强制篇幅与数字）。整个故事自洽到可以直接写进报告。
+    </p>
+    <p>
+      如果不做这个只改一个变量的消融，这个假发现会一路进 PR、进简历、进面试。
+      <strong>结论的有效性受制于测量的可靠性——这不是口号，是这次真实发生的事。</strong>
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2>当前指标面板</h2>
+  <p class="lede">
+    默认管线参数（相似度 0.42 / 每查询 5 结果 / bs 抓取器 / 源筛选关闭），
+    researcher 用 gpt-4o-mini，grader 用 gpt-4-turbo，3 个 query。
+  </p>
+
+  <div class="scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>指标</th>
+        <th>分组</th>
+        <th class="num">medical</th>
+        <th class="num">ai_tech</th>
+        <th class="num">legal</th>
+        <th class="num">均值</th>
+        <th>解读</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th>unsupported_claim</th><td class="dim">Faithfulness</td>
+        <td class="num">1.000</td><td class="num">0.975</td><td class="num">1.000</td>
+        <td class="num lead-val">0.992</td>
+        <td>修复后真实值</td>
+      </tr>
+      <tr>
+        <th>citation_faithfulness</th><td class="dim">Citation</td>
+        <td class="num">1.000</td><td class="num">1.000</td><td class="num">1.000</td>
+        <td class="num">1.000</td>
+        <td class="warn-val">饱和，无区分度</td>
+      </tr>
+      <tr>
+        <th>source_diversity</th><td class="dim">Source Quality</td>
+        <td class="num">0.944</td><td class="num">0.929</td><td class="num">1.000</td>
+        <td class="num">0.958</td>
+        <td class="dim">本就容易高</td>
+      </tr>
+      <tr>
+        <th>subtopic_coverage</th><td class="dim">Answer Relevancy</td>
+        <td class="num">0.857</td><td class="num">0.857</td><td class="num">0.714</td>
+        <td class="num">0.809</td>
+        <td>有区分度</td>
+      </tr>
+      <tr>
+        <th>source_authority</th><td class="dim">Source Quality</td>
+        <td class="num">0.761</td><td class="num">0.643</td><td class="num">0.732</td>
+        <td class="num">0.712</td>
+        <td class="warn-val">虚高，实为 0.646</td>
+      </tr>
+    </tbody>
+  </table>
+  <caption>全部为"越高越好"的 0–1 分数。5 个指标中真正有区分度的只有 authority 和 subtopic，其余三个在干净报告上饱和或接近饱和。</caption>
+  </div>
+
+  <h3>饱和从哪来</h3>
+  <p>
+    <code>citation_faithfulness</code> 的满分不是优秀，是分母太小：报告的参考文献平均只列
+    <strong>3.67</strong> 个域名，而实际用了 <strong>14.3</strong> 个源。
+    而且这个指标是结构性的——它只查"列出的参考文献有没有在正文出现过"，
+    <strong>不查"这条引用是否真的支撑它所在的那句话"</strong>。
+    旁边那个描述性字段更有信息量：<code>citation_coverage = 0.426</code>。
+  </p>
+</section>
+
+<section>
+  <h2>管线漏斗</h2>
+  <p class="lede">
+    分层插桩记录每一级的进出量。三次捕获运行，管线参数全默认。
+  </p>
+
+  <div class="scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>运行</th>
+        <th class="num">子查询</th>
+        <th class="num">URL</th>
+        <th class="num">抓取成功</th>
+        <th class="num">抓取率</th>
+        <th class="num">抓取字符</th>
+        <th class="num">context</th>
+        <th class="num">压缩留存</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><th>medical</th><td class="num">3</td><td class="num">18</td><td class="num">11</td><td class="num warn-val">61%</td><td class="num dim">179,887</td><td class="num dim">41,405</td><td class="num">23%</td></tr>
+      <tr><th>ai_tech</th><td class="num">3</td><td class="num">14</td><td class="num">10</td><td class="num">71%</td><td class="num dim">361,622</td><td class="num dim">44,298</td><td class="num warn-val">12%</td></tr>
+      <tr><th>legal</th><td class="num">3</td><td class="num">11</td><td class="num">9</td><td class="num">82%</td><td class="num dim">272,819</td><td class="num dim">32,468</td><td class="num warn-val">12%</td></tr>
+      <tr class="total"><th>合计</th><td class="num">9</td><td class="num">43</td><td class="num">30</td><td class="num warn-val">70%</td><td class="num dim">814,328</td><td class="num dim">118,171</td><td class="num warn-val">15%</td></tr>
+    </tbody>
+  </table>
+  <caption>抓取层丢掉 30% 的 URL，压缩层丢掉 85% 的字符。后者未必是损失——过滤无关内容正是它的职责；前者则是纯粹的损失。</caption>
+  </div>
+</section>
+
+<section>
+  <h2>检索层：三成预算重复覆盖</h2>
+  <p class="lede">
+    管线每次研究只搜 4 次（原 query + 3 个子查询），每次取 5 条结果。
+    重复的 URL 在抓取前就被去重函数滤掉，所以下游任何一级测到的重叠都恒为零——
+    去重函数本身是唯一还能看见浪费的地方。
+  </p>
+
+  <div class="scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>题目</th>
+        <th class="num">n</th>
+        <th class="num">重叠率均值</th>
+        <th class="num">范围</th>
+        <th class="num">标准差</th>
+        <th class="num">空转检索</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><th>ai_tech</th><td class="num">5</td><td class="num">0.220</td><td class="num dim">0.20–0.25</td><td class="num dim">0.027</td><td class="num">0</td></tr>
+      <tr><th>medical</th><td class="num">5</td><td class="num">0.270</td><td class="num dim">0.15–0.40</td><td class="num dim">0.104</td><td class="num">0</td></tr>
+      <tr><th>finance</th><td class="num">5</td><td class="num">0.340</td><td class="num dim">0.25–0.50</td><td class="num dim">0.096</td><td class="num">1</td></tr>
+      <tr><th>legal</th><td class="num">5</td><td class="num warn-val">0.390</td><td class="num dim">0.30–0.50</td><td class="num dim">0.102</td><td class="num warn-val">2</td></tr>
+      <tr class="total"><th>全部</th><td class="num">20</td><td class="num warn-val">0.305</td><td class="num dim">0.15–0.50</td><td class="num dim">0.105</td><td class="num warn-val">3 / 80</td></tr>
+    </tbody>
+  </table>
+  <caption>"空转检索"指一次检索的 5 条结果全部是已见过的 URL，净新增为零。20 次运行，总花费 $0.031。</caption>
+  </div>
+
+  <h3>是规划器不稳，还是题目不需要分支？</h3>
+  <p>
+    重复同一道题可以把两者分开：同题多次的波动来自规划器本身，题目之间的差异来自题目特性。
+  </p>
+  <div class="scroll">
+  <table>
+    <thead>
+      <tr><th>方差来源</th><th class="num">标准差</th><th>含义</th></tr>
+    </thead>
+    <tbody>
+      <tr><th>同题重复</th><td class="num">0.082</td><td class="dim">规划器的运行间不稳定性</td></tr>
+      <tr><th>跨题差异</th><td class="num">0.075</td><td class="dim">题目本身的分支难度</td></tr>
+      <tr class="total"><th>比值</th><td class="num">1.10</td><td class="dim">两者贡献几乎相等</td></tr>
+    </tbody>
+  </table>
+  <caption>规划器确实不稳定：同一道题跑 5 次产出 5 组不同的子查询（finance 为 4 组）。但题目特性贡献了同样多的方差，所以两个解释都对，各占一半。</caption>
+  </div>
+
+  <div class="callout caution">
+    <span class="tag">一个被推翻的机制解释</span>
+    <p>
+      直觉上，浪费应当来自规划器复述原题——它确实经常这么做，而管线又会单独再搜一次原 query。
+      但把"最相似子查询与原题的余弦"和重叠率做相关，得到 <strong>r = −0.034</strong>，几乎零相关。
+    </p>
+    <p>
+      反例很干净：finance 的子查询区分度最高（余弦 0.769，明显不是复述），重叠率却排第二高；
+      ai_tech 余弦 0.950，重叠率却最低。
+      <strong>真实机制更可能是：即使子查询在语义上区分良好，检索器仍返回同一批页面</strong>——
+      每查询只取 top-5，同主题下不同措辞的 top-5 高度重合。
+    </p>
+    <p>
+      这个修正改变了修法：不是让规划器措辞更有区分度（finance 已经很有区分度了），
+      而是加大单查询深度，或在检索前于查询层面去重。
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2>抓取失败不是随机的</h2>
+  <p class="lede">
+    这是本次调查最硬的一条发现，判定完全基于确定性规则表，不依赖任何 LLM 判断。
+  </p>
+
+  <div class="scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>来源分组</th>
+        <th class="num">URL 数</th>
+        <th class="num">抓取成功</th>
+        <th class="num">失败率</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><th>高权威（.gov / .edu / 白名单）</th><td class="num">7</td><td class="num">2</td><td class="num warn-val">71%</td></tr>
+      <tr><th>其余（.com / .org / 未知）</th><td class="num">36</td><td class="num">28</td><td class="num">22%</td></tr>
+      <tr class="total"><th>比值</th><td class="num dim">—</td><td class="num dim">—</td><td class="num warn-val">3.2×</td></tr>
+    </tbody>
+  </table>
+  <caption>被规则表归入"其余"的失败源里还有 sciencedirect.com、ieeexplore.ieee.org、mdpi.com、mayoclinic.org——按实际权威性算，13 次失败中有 10 次是权威源。</caption>
+  </div>
+
+  <p>
+    失败原因日志写得很清楚：<code>congress.gov</code> 返回 HTTP 403，
+    <code>pmc.ncbi.nlm.nih.gov</code> 返回反爬挑战页，<code>itsartlaw.org</code> 返回 429。
+    默认 <code>SCRAPER="bs"</code> 是纯 BeautifulSoup + HTTP GET，不渲染 JS、不处理反爬，
+    而权威机构的反爬恰恰最严。
+  </p>
+
+  <div class="callout">
+    <span class="tag">指标与架构的交互</span>
+    <p>
+      <code>source_authority</code> 的计算基数是 <code>visited_urls</code>，其中 30% 从未成功抓取。
+      这些高分源（1.0、0.9）高于均值 0.712，把平均分<strong>拉高</strong>了——
+      实际读到的证据权威性只有 <strong>0.646</strong>。
+    </p>
+    <p>
+      也就是说：<strong>抓取器越差，指标越好看。</strong>
+      指标本该抓到这个缺陷，却在替它掩盖。这条已修复——源指标现在只对实际加载成功的页面打分。
+    </p>
+  </div>
+
+  <p>
+    该模式在三次独立运行中复现：第二次失败的是 mdpi、dl.acm.org、sciencedirect；
+    第三次失败的 7 个里有 5 个是 pmc.ncbi.nlm.nih.gov、pubmed.ncbi.nlm.nih.gov、sciencedirect.com、mayo.edu。
+  </p>
+</section>
+
+<section>
+  <h2>压缩层：暴露的旋钮是失效的</h2>
+
+  <div class="scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>相似度阈值</th>
+        <th class="num">平均 context</th>
+        <th class="num">无据率</th>
+        <th>说明</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><th>0.30</th><td class="num">39,397</td><td class="num">0.111</td><td class="dim">与默认值输出逐字节相同</td></tr>
+      <tr><th>0.42（默认）</th><td class="num">39,397</td><td class="num">0.111</td><td class="dim">基准</td></tr>
+      <tr><th>0.55</th><td class="num">34,772</td><td class="num">0.181</td><td class="dim">此时阈值才开始起作用</td></tr>
+      <tr><th>无过滤</th><td class="num">273,283</td><td class="num warn-val">0.278</td><td class="dim">grader 大海捞针能力下降</td></tr>
+    </tbody>
+  </table>
+  <caption>此表 grader 为 gpt-4o-mini（需扫描四个条件，成本考虑），故绝对值与主面板不可直接比较；此处关心的是条件间的相对变化。</caption>
+  </div>
+
+  <p>
+    把阈值从 0.42 降到 0.30，context 一个字节都没变。真正做裁剪的是别处——插桩到
+    <code>pretty_print_docs</code> 之后看得一清二楚：
+  </p>
+
+  <div class="scroll">
+  <table>
+    <thead>
+      <tr>
+        <th class="num">子查询语料</th>
+        <th class="num">过滤后文档数</th>
+        <th class="num">top_n</th>
+        <th>是否被截断</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="num dim">154,134</td><td class="num">20</td><td class="num">10</td><td class="warn-val">是</td></tr>
+      <tr><td class="num dim">51,000</td><td class="num">20</td><td class="num">10</td><td class="warn-val">是</td></tr>
+      <tr><td class="num dim">26,570</td><td class="num">20</td><td class="num">10</td><td class="warn-val">是</td></tr>
+      <tr><td class="num dim">28,125</td><td class="num">20</td><td class="num">10</td><td class="warn-val">是</td></tr>
+    </tbody>
+  </table>
+  <caption>每一次压缩，都有 20 个文档通过相似度过滤，而 top_n=10 砍掉一半。4/4 次全部触发。</caption>
+  </div>
+
+  <p>
+    这个 <code>10</code> 硬编码在 <code>context_manager.py</code> 里，<strong>不在配置文件中</strong>，用户改不了。
+    而暴露在配置里的 <code>SIMILARITY_THRESHOLD</code> 在默认值下完全不起作用。
+    任何"调低相似度阈值以多保留证据"的调优尝试，都是白做功。
+  </p>
+</section>
+
+<section>
+  <h2>指标可靠性标定</h2>
+  <p class="lede">
+    受控退化：按 0 / 25 / 50 / 75 / 100% 逐级劣化报告，检验指标响应是否与退化强度成比例。
+    误差单位为百分点。
+  </p>
+
+  <div class="scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>指标</th>
+        <th class="num">朴素口径</th>
+        <th class="num">地板修正</th>
+        <th class="num">满量程归一</th>
+        <th class="num">MSE</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><th>source_authority</th><td class="num">16.9%</td><td class="num lead-val">2.6%</td><td class="num">5.8%</td><td class="num">0.0452</td></tr>
+      <tr><th>unsupported_claim</th><td class="num">20.0%</td><td class="num lead-val">3.4%</td><td class="num">20.0%</td><td class="num">0.0917</td></tr>
+      <tr><th>source_diversity</th><td class="num">6.5%</td><td class="num lead-val">3.4%</td><td class="num">4.5%</td><td class="num">0.0086</td></tr>
+      <tr><th>citation_faithfulness</th><td class="num">10.9%</td><td class="num">10.9%</td><td class="num">10.9%</td><td class="num">0.0246</td></tr>
+      <tr><th>subtopic_coverage</th><td class="num">20.2%</td><td class="num warn-val">17.6%</td><td class="num">12.2%</td><td class="num">0.0785</td></tr>
+      <tr class="total"><th>合计</th><td class="num">14.9%</td><td class="num lead-val">7.6%</td><td class="num">10.7%</td><td class="num">0.0497</td></tr>
+    </tbody>
+  </table>
+  <caption>grader = gpt-4-turbo，75 个观测点。"地板修正"按各指标的真实地板做线性期望，是三种口径里唯一既直观又不受地板效应干扰的，推荐对外报这一个：<strong>7.6 个百分点</strong>。</caption>
+  </div>
+
+  <h3>grader 强度买到了什么</h3>
+  <div class="scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>grader</th>
+        <th class="num">单调性</th>
+        <th class="num">LLM 指标 MSE</th>
+        <th class="num">全部 MSE</th>
+        <th class="num">地板修正误差</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><th>gpt-4-turbo</th><td class="num lead-val">14/15</td><td class="num">0.0718</td><td class="num">0.0497</td><td class="num">7.6%</td></tr>
+      <tr><th>gpt-4o-mini</th><td class="num warn-val">12/15</td><td class="num">0.1112</td><td class="num">0.0733</td><td class="num">7.5%</td></tr>
+    </tbody>
+  </table>
+  <caption>误差幅度几乎相同，单调性却差了两条——弱 grader 的问题不是幅度偏差大，而是出现了方向性反弹。单一误差数字不足以描述可靠性，必须与单调性通过率一起报。</caption>
+  </div>
+
+  <div class="callout">
+    <span class="tag">对照实验</span>
+    <p>
+      <code>source_diversity</code> 的退化期望可以从退化函数本身解析推导，独立于指标实现。
+      拿它当真值对照：<strong>15/15 全中，平均误差 0.02 个百分点</strong>。
+    </p>
+    <p>
+      也就是说这个指标是精确的，朴素口径下那 6.5% 的"误差"完全来自我们用了错误的期望模型。
+      <strong>区分"指标不准"和"期望模型不对"是必须的</strong>，否则会冤枉一个完全正确的指标。
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2>问题清单</h2>
+  <p class="lede">按证据强度排序。架构侧四条已确认、一条观察待验；评估侧四条已修、三条待处理；三条假设被证伪。</p>
+
+  <h3>架构侧</h3>
+  <div class="findings">
+    <div class="finding">
+      <span class="id">A1</span>
+      <div class="body">
+        <span class="title">抓取层对权威源系统性失败</span>
+        <p>高权威源失败率 71%，普通源 22%。管线实际用的是"最易抓取"而非"最权威"的源。</p>
+        <p class="ev">证据：确定性规则表判定，三次独立运行复现</p>
+      </div>
+      <span class="chip chip-open">待修复</span>
+    </div>
+    <div class="finding">
+      <span class="id">A2</span>
+      <div class="body">
+        <span class="title">配置暴露的旋钮失效，真正的约束硬编码</span>
+        <p><code>SIMILARITY_THRESHOLD</code> 默认值下不起作用；裁剪由硬编码的 <code>max_results=10</code> 完成，不可配置。</p>
+        <p class="ev">证据：阈值扫描输出逐字节相同 + top_n 插桩 4/4 触发</p>
+      </div>
+      <span class="chip chip-open">待修复</span>
+    </div>
+    <div class="finding">
+      <span class="id">A3</span>
+      <div class="body">
+        <span class="title">可观测性缺失</span>
+        <p>管线只暴露"访问过的源"，不暴露"实际读到的源"，导致外部无法判断 agent 究竟用了什么证据。</p>
+        <p class="ev">证据：插桩前后对比，权威分虚高 +0.066</p>
+      </div>
+      <span class="chip chip-open">待修复</span>
+    </div>
+    <div class="finding">
+      <span class="id">A4</span>
+      <div class="body">
+        <span class="title">压缩快路径是死代码</span>
+        <p><code>COMPRESSION_THRESHOLD=8000</code> 从未触发，真实语料比阈值大 2–20 倍。</p>
+        <p class="ev">证据：11 次压缩调用触发 0 次</p>
+      </div>
+      <span class="chip chip-open">待修复</span>
+    </div>
+    <div class="finding">
+      <span class="id">A5</span>
+      <div class="body">
+        <span class="title">三成检索预算重复覆盖已检索内容</span>
+        <p>平均重叠率 30.5%，最坏 50%；80 次检索中 3 次净新增为零。规划器不稳定性与题目差异各贡献一半。</p>
+        <p class="ev">证据：20 次运行，方差分解 0.082 / 0.075；机制非"复述原题"（r = −0.034）</p>
+      </div>
+      <span class="chip chip-open">待修复</span>
+    </div>
+  </div>
+
+  <h3>评估侧</h3>
+  <div class="findings">
+    <div class="finding">
+      <span class="id">E1</span>
+      <div class="body">
+        <span class="title">证据截断制造了整个无据信号</span>
+        <p class="ev">4000 → 50000，无据率 0.659 → 0.000</p>
+      </div>
+      <span class="chip chip-fixed">已修复</span>
+    </div>
+    <div class="finding">
+      <span class="id">E2</span>
+      <div class="body">
+        <span class="title">子话题判定把参考文献当作覆盖证据</span>
+        <p class="ev">空报告假阳性地板 0.381 → 0.000</p>
+      </div>
+      <span class="chip chip-fixed">已修复</span>
+    </div>
+    <div class="finding">
+      <span class="id">E3</span>
+      <div class="body">
+        <span class="title">期望子话题每次重新生成，跨次不可复现</span>
+        <p class="ev">同 query 重复评分漂移 ±0.10，现由调用方持有的缓存固定</p>
+      </div>
+      <span class="chip chip-fixed">已修复</span>
+    </div>
+    <div class="finding">
+      <span class="id">E4</span>
+      <div class="body">
+        <span class="title">源指标为从未读到的源打分</span>
+        <p class="ev">权威分虚高 +0.066，现只对实际加载成功的页面打分</p>
+      </div>
+      <span class="chip chip-fixed">已修复</span>
+    </div>
+    <div class="finding">
+      <span class="id">E5</span>
+      <div class="body">
+        <span class="title">citation_faithfulness 饱和，失去区分度</span>
+        <p>参考文献平均只列 3.67 个域名，分母过小；且只查结构不查语义。</p>
+        <p class="ev">三份报告全部 1.000；语义版引用精度仍在路线图上</p>
+      </div>
+      <span class="chip chip-open">未处理</span>
+    </div>
+    <div class="finding">
+      <span class="id">E6</span>
+      <div class="body">
+        <span class="title">指标绝对值不具备跨 grader 可比性</span>
+        <p>同一批报告，turbo 判 0.452、mini 判 0.111，差 4 倍（断言集也随之变化，属混杂因素）。</p>
+        <p class="ev">对外报数必须锁定 grader</p>
+      </div>
+      <span class="chip chip-open">未处理</span>
+    </div>
+    <div class="finding">
+      <span class="id">E7</span>
+      <div class="body">
+        <span class="title">缓存固定了标尺，没固定判定</span>
+        <p>期望子话题已固定，但每个子话题"算不算覆盖"的判定本身仍在抖动。</p>
+        <p class="ev">同批数据两次评分：0.809 与 0.905</p>
+      </div>
+      <span class="chip chip-open">未处理</span>
+    </div>
+  </div>
+
+  <h3>被证伪的假设</h3>
+  <div class="findings">
+    <div class="finding">
+      <span class="id">R1</span>
+      <div class="body">
+        <span class="title">agent 在写自己检索结果不支持的内容</span>
+        <p>全量 context 下 29 条断言全部有据。writer 老实待在证据里写作。</p>
+      </div>
+      <span class="chip chip-refuted">已证伪</span>
+    </div>
+    <div class="finding">
+      <span class="id">R2</span>
+      <div class="body">
+        <span class="title">相似度阈值是压缩层瓶颈</span>
+        <p>原判定为最高嫌疑（★★★），实际在默认值下完全不起作用。</p>
+      </div>
+      <span class="chip chip-refuted">已证伪</span>
+    </div>
+    <div class="finding">
+      <span class="id">R3</span>
+      <div class="body">
+        <span class="title">压缩快路径分叉造成运行间方差</span>
+        <p>该分支从未触发，不可能是方差来源。</p>
+      </div>
+      <span class="chip chip-refuted">已证伪</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>数据可信度边界</h2>
+  <ul>
+    <li><strong>样本量分层。</strong>A5 有 20 次运行支撑，抓取率整体值同样（20 次均值 0.680，范围 0.333–0.929）。但 A1 的<em>按权威性分组</em>那个 3.2 倍仍只基于 43 个 URL——那批运行才存了 URL 明细。指标面板与消融实验为 3 个 query。</li>
+    <li><strong>历史 benchmark 日志已作废。</strong>17 份日志是用有缺陷的指标测的，且未存报告原文，无法用修复后的指标重新打分。这个问题已修——benchmark 现在持久化 report 与 context。</li>
+    <li><strong>grader 混杂。</strong>压缩层扫描用 mini（需扫四个条件），主面板与消融用 turbo。跨表比较绝对值无效。</li>
+    <li><strong>捕获运行的 researcher LLM 是 gpt-4o-mini</strong>，非仓库默认。管线结构参数全部为默认值，故结构性结论不受影响。</li>
+    <li><strong>成本未全程计量。</strong>$0.044 是研究调用的实测合计；grader 侧为估算。</li>
+  </ul>
+
+  <div class="callout">
+    <span class="tag">最便宜的下一步</span>
+    <p>
+      A5 已经用 20 次运行、$0.031 做扎实了。同样的做法可以补上 A1 最后的缺口——
+      重跑一批并保留每个 URL 的域名与成败，把"权威源失败率 3.2 倍"从 43 个 URL 扩到几百个。
+      按现在的单次成本，约 <strong>$0.03</strong>。
+    </p>
+  </div>
+</section>
+
+<footer>
+  分支 <code>eval-metric-fixes</code>，四个提交，49 个单元测试全部通过，无需网络或 API key。
+  PR #1821 内容未受影响。
+</footer>
+
+</div>

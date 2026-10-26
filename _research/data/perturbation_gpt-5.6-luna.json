@@ -1,0 +1,195 @@
+{
+  "grader": "gpt-5.6-luna",
+  "fractions": [
+    0.0,
+    0.25,
+    0.5,
+    0.75,
+    1.0
+  ],
+  "trajectories": [
+    {
+      "metric": "citation_faithfulness",
+      "topic": "medical",
+      "vals": [
+        1.0,
+        1.0,
+        1.0,
+        0.667,
+        0.0
+      ],
+      "increasing": false
+    },
+    {
+      "metric": "citation_faithfulness",
+      "topic": "legal",
+      "vals": [
+        1.0,
+        1.0,
+        0.667,
+        0.5,
+        0.0
+      ],
+      "increasing": false
+    },
+    {
+      "metric": "citation_faithfulness",
+      "topic": "ai_tech",
+      "vals": [
+        1.0,
+        1.0,
+        0.5,
+        0.5,
+        0.0
+      ],
+      "increasing": false
+    },
+    {
+      "metric": "source_diversity",
+      "topic": "medical",
+      "vals": [
+        1.0,
+        0.9,
+        0.6,
+        0.3,
+        0.1
+      ],
+      "increasing": false
+    },
+    {
+      "metric": "source_diversity",
+      "topic": "legal",
+      "vals": [
+        1.0,
+        0.786,
+        0.571,
+        0.357,
+        0.071
+      ],
+      "increasing": false
+    },
+    {
+      "metric": "source_diversity",
+      "topic": "ai_tech",
+      "vals": [
+        0.923,
+        0.769,
+        0.615,
+        0.308,
+        0.077
+      ],
+      "increasing": false
+    },
+    {
+      "metric": "source_authority",
+      "topic": "medical",
+      "vals": [
+        0.873,
+        0.72,
+        0.5,
+        0.33,
+        0.25
+      ],
+      "increasing": false
+    },
+    {
+      "metric": "source_authority",
+      "topic": "legal",
+      "vals": [
+        0.74,
+        0.575,
+        0.439,
+        0.304,
+        0.207
+      ],
+      "increasing": false
+    },
+    {
+      "metric": "source_authority",
+      "topic": "ai_tech",
+      "vals": [
+        0.723,
+        0.55,
+        0.45,
+        0.331,
+        0.246
+      ],
+      "increasing": false
+    },
+    {
+      "metric": "subtopic_coverage",
+      "topic": "medical",
+      "vals": [
+        0.857,
+        0.857,
+        0.714,
+        0.0,
+        0.0
+      ],
+      "increasing": false
+    },
+    {
+      "metric": "subtopic_coverage",
+      "topic": "legal",
+      "vals": [
+        0.714,
+        0.714,
+        0.571,
+        0.571,
+        0.0
+      ],
+      "increasing": false
+    },
+    {
+      "metric": "subtopic_coverage",
+      "topic": "ai_tech",
+      "vals": [
+        0.286,
+        0.286,
+        0.143,
+        0.0,
+        0.0
+      ],
+      "increasing": false
+    },
+    {
+      "metric": "unsupported_claim",
+      "topic": "medical",
+      "vals": [
+        0.125,
+        0.25,
+        0.625,
+        0.875,
+        1.0
+      ],
+      "increasing": true
+    },
+    {
+      "metric": "unsupported_claim",
+      "topic": "legal",
+      "vals": [
+        0.0,
+        0.25,
+        0.5,
+        0.75,
+        0.875
+      ],
+      "increasing": true
+    },
+    {
+      "metric": "unsupported_claim",
+      "topic": "ai_tech",
+      "vals": [
+        0.143,
+        0.286,
+        0.571,
+        0.714,
+        1.0
+      ],
+      "increasing": true
+    }
+  ],
+  "monotone_pass": 15,
+  "monotone_total": 15,
+  "mean_error_pp": 7.116637362637363
+}

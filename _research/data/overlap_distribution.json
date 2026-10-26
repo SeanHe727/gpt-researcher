@@ -1,0 +1,442 @@
+[
+ {
+  "subqueries": [
+   "latest treatments for Type 2 diabetes and their clinical outcomes",
+   "new medications for Type 2 diabetes and their effectiveness",
+   "current research on Type 2 diabetes treatment options and patient outcomes"
+  ],
+  "subquery_sims": [
+   0.918,
+   0.67,
+   0.833
+  ],
+  "max_sim": 0.918,
+  "urls_proposed": 20,
+  "urls_duplicate": 8,
+  "search_overlap": 0.4,
+  "scrape_rate": 0.333,
+  "dead_searches": 0,
+  "cost": 0.0008379799999999999,
+  "topic": "medical",
+  "query": "Current treatments and clinical outcomes for Type 2 diabetes",
+  "run": 1
+ },
+ {
+  "subqueries": [
+   "latest treatments for Type 2 diabetes and their clinical outcomes",
+   "new medications for Type 2 diabetes and their effectiveness",
+   "current clinical guidelines for managing Type 2 diabetes"
+  ],
+  "subquery_sims": [
+   0.918,
+   0.67,
+   0.717
+  ],
+  "max_sim": 0.918,
+  "urls_proposed": 20,
+  "urls_duplicate": 5,
+  "search_overlap": 0.25,
+  "scrape_rate": 0.533,
+  "dead_searches": 0,
+  "cost": 0.0008790600000000001,
+  "topic": "medical",
+  "query": "Current treatments and clinical outcomes for Type 2 diabetes",
+  "run": 2
+ },
+ {
+  "subqueries": [
+   "latest treatments for Type 2 diabetes and their clinical outcomes",
+   "new medications for Type 2 diabetes in clinical trials 2026",
+   "impact of innovative therapies on Type 2 diabetes management and patient health outcomes"
+  ],
+  "subquery_sims": [
+   0.918,
+   0.632,
+   0.715
+  ],
+  "max_sim": 0.918,
+  "urls_proposed": 20,
+  "urls_duplicate": 4,
+  "search_overlap": 0.2,
+  "scrape_rate": 0.438,
+  "dead_searches": 0,
+  "cost": 0.0009439600000000001,
+  "topic": "medical",
+  "query": "Current treatments and clinical outcomes for Type 2 diabetes",
+  "run": 3
+ },
+ {
+  "subqueries": [
+   "latest treatments for Type 2 diabetes and their clinical outcomes",
+   "new medications for Type 2 diabetes and their effectiveness",
+   "current clinical trials and advancements in Type 2 diabetes management"
+  ],
+  "subquery_sims": [
+   0.918,
+   0.67,
+   0.778
+  ],
+  "max_sim": 0.918,
+  "urls_proposed": 20,
+  "urls_duplicate": 7,
+  "search_overlap": 0.35,
+  "scrape_rate": 0.385,
+  "dead_searches": 0,
+  "cost": 0.00055414,
+  "topic": "medical",
+  "query": "Current treatments and clinical outcomes for Type 2 diabetes",
+  "run": 4
+ },
+ {
+  "subqueries": [
+   "latest advancements in Type 2 diabetes treatments and clinical outcomes",
+   "new medications for Type 2 diabetes and their effectiveness",
+   "current clinical trials and research on Type 2 diabetes therapies"
+  ],
+  "subquery_sims": [
+   0.871,
+   0.67,
+   0.781
+  ],
+  "max_sim": 0.871,
+  "urls_proposed": 20,
+  "urls_duplicate": 3,
+  "search_overlap": 0.15,
+  "scrape_rate": 0.529,
+  "dead_searches": 0,
+  "cost": 0.0013979600000000002,
+  "topic": "medical",
+  "query": "Current treatments and clinical outcomes for Type 2 diabetes",
+  "run": 5
+ },
+ {
+  "subqueries": [
+   "legal implications of AI-generated content in copyright law",
+   "recent court cases on AI authorship and copyright protection",
+   "how copyright law is adapting to AI-generated works and intellectual property rights"
+  ],
+  "subquery_sims": [
+   0.978,
+   0.742,
+   0.762
+  ],
+  "max_sim": 0.978,
+  "urls_proposed": 20,
+  "urls_duplicate": 6,
+  "search_overlap": 0.3,
+  "scrape_rate": 0.857,
+  "dead_searches": 0,
+  "cost": 0.00226859,
+  "topic": "legal",
+  "query": "Legal implications of AI-generated content and copyright law",
+  "run": 1
+ },
+ {
+  "subqueries": [
+   "legal implications of AI-generated content on copyright law",
+   "recent court cases involving AI and copyright ownership",
+   "how copyright law is adapting to AI-generated works"
+  ],
+  "subquery_sims": [
+   0.978,
+   0.74,
+   0.794
+  ],
+  "max_sim": 0.978,
+  "urls_proposed": 20,
+  "urls_duplicate": 10,
+  "search_overlap": 0.5,
+  "scrape_rate": 0.7,
+  "dead_searches": 1,
+  "cost": 0.0012352300000000001,
+  "topic": "legal",
+  "query": "Legal implications of AI-generated content and copyright law",
+  "run": 2
+ },
+ {
+  "subqueries": [
+   "impact of AI-generated content on copyright law",
+   "legal challenges of copyrighting AI-created works",
+   "recent developments in AI and intellectual property rights"
+  ],
+  "subquery_sims": [
+   0.913,
+   0.812,
+   0.671
+  ],
+  "max_sim": 0.913,
+  "urls_proposed": 20,
+  "urls_duplicate": 6,
+  "search_overlap": 0.3,
+  "scrape_rate": 0.929,
+  "dead_searches": 0,
+  "cost": 0.00156925,
+  "topic": "legal",
+  "query": "Legal implications of AI-generated content and copyright law",
+  "run": 3
+ },
+ {
+  "subqueries": [
+   "legal implications of copyright law for AI-generated content",
+   "recent court cases on AI authorship and copyright eligibility",
+   "how AI training affects copyright infringement liability"
+  ],
+  "subquery_sims": [
+   0.947,
+   0.728,
+   0.752
+  ],
+  "max_sim": 0.947,
+  "urls_proposed": 20,
+  "urls_duplicate": 7,
+  "search_overlap": 0.35,
+  "scrape_rate": 0.846,
+  "dead_searches": 0,
+  "cost": 0.00162189,
+  "topic": "legal",
+  "query": "Legal implications of AI-generated content and copyright law",
+  "run": 4
+ },
+ {
+  "subqueries": [
+   "legal implications of AI-generated content and copyright law",
+   "recent court cases on copyright and AI-generated works",
+   "how copyright law is adapting to AI technology and content creation"
+  ],
+  "subquery_sims": [
+   0.991,
+   0.788,
+   0.779
+  ],
+  "max_sim": 0.991,
+  "urls_proposed": 20,
+  "urls_duplicate": 10,
+  "search_overlap": 0.5,
+  "scrape_rate": 0.7,
+  "dead_searches": 1,
+  "cost": 0.00142513,
+  "topic": "legal",
+  "query": "Legal implications of AI-generated content and copyright law",
+  "run": 5
+ },
+ {
+  "subqueries": [
+   "recent advancements in large language models 2024",
+   "new large language models released in 2024",
+   "trends in generative AI and large language models 2024"
+  ],
+  "subquery_sims": [
+   0.943,
+   0.867,
+   0.807
+  ],
+  "max_sim": 0.943,
+  "urls_proposed": 20,
+  "urls_duplicate": 4,
+  "search_overlap": 0.2,
+  "scrape_rate": 0.875,
+  "dead_searches": 0,
+  "cost": 0.00308897,
+  "topic": "ai_tech",
+  "query": "Latest developments in large language models in 2024",
+  "run": 1
+ },
+ {
+  "subqueries": [
+   "Recent advancements in large language models in 2024",
+   "Innovations in large language models and their applications in 2024",
+   "Overview of new large language models released in 2024"
+  ],
+  "subquery_sims": [
+   0.955,
+   0.897,
+   0.882
+  ],
+  "max_sim": 0.955,
+  "urls_proposed": 20,
+  "urls_duplicate": 4,
+  "search_overlap": 0.2,
+  "scrape_rate": 0.875,
+  "dead_searches": 0,
+  "cost": 0.0034257500000000004,
+  "topic": "ai_tech",
+  "query": "Latest developments in large language models in 2024",
+  "run": 2
+ },
+ {
+  "subqueries": [
+   "Recent advancements in large language models in 2024",
+   "Innovations in generative AI and large language models from 2024",
+   "Key developments in large language models and their applications in 2024"
+  ],
+  "subquery_sims": [
+   0.955,
+   0.809,
+   0.927
+  ],
+  "max_sim": 0.955,
+  "urls_proposed": 20,
+  "urls_duplicate": 4,
+  "search_overlap": 0.2,
+  "scrape_rate": 0.75,
+  "dead_searches": 0,
+  "cost": 0.00331315,
+  "topic": "ai_tech",
+  "query": "Latest developments in large language models in 2024",
+  "run": 3
+ },
+ {
+  "subqueries": [
+   "Recent advancements in large language models in 2024",
+   "Innovations in generative AI and large language models during 2024",
+   "Key developments and trends in large language models from 2024"
+  ],
+  "subquery_sims": [
+   0.955,
+   0.806,
+   0.924
+  ],
+  "max_sim": 0.955,
+  "urls_proposed": 20,
+  "urls_duplicate": 5,
+  "search_overlap": 0.25,
+  "scrape_rate": 0.667,
+  "dead_searches": 0,
+  "cost": 0.00217003,
+  "topic": "ai_tech",
+  "query": "Latest developments in large language models in 2024",
+  "run": 4
+ },
+ {
+  "subqueries": [
+   "latest advancements in large language models 2024",
+   "new features and applications of large language models in 2024",
+   "key innovations in generative AI and large language models 2024"
+  ],
+  "subquery_sims": [
+   0.941,
+   0.87,
+   0.78
+  ],
+  "max_sim": 0.941,
+  "urls_proposed": 20,
+  "urls_duplicate": 5,
+  "search_overlap": 0.25,
+  "scrape_rate": 0.733,
+  "dead_searches": 0,
+  "cost": 0.00317169,
+  "topic": "ai_tech",
+  "query": "Latest developments in large language models in 2024",
+  "run": 5
+ },
+ {
+  "subqueries": [
+   "how does the Federal Reserve use interest rates to control inflation",
+   "what monetary policy tools does the Federal Reserve employ to manage inflation",
+   "impact of Federal Reserve's actions on inflation and economic stability"
+  ],
+  "subquery_sims": [
+   0.769,
+   0.752,
+   0.625
+  ],
+  "max_sim": 0.769,
+  "urls_proposed": 20,
+  "urls_duplicate": 7,
+  "search_overlap": 0.35,
+  "scrape_rate": 0.692,
+  "dead_searches": 0,
+  "cost": 0.00073908,
+  "topic": "finance",
+  "query": "How does the Federal Reserve control inflation through monetary policy",
+  "run": 1
+ },
+ {
+  "subqueries": [
+   "how does the Federal Reserve use interest rates to control inflation",
+   "what monetary policy tools does the Federal Reserve employ to manage inflation",
+   "impact of Federal Reserve's monetary policy on inflation and economic stability"
+  ],
+  "subquery_sims": [
+   0.769,
+   0.752,
+   0.705
+  ],
+  "max_sim": 0.769,
+  "urls_proposed": 20,
+  "urls_duplicate": 6,
+  "search_overlap": 0.3,
+  "scrape_rate": 0.643,
+  "dead_searches": 0,
+  "cost": 0.0005815600000000001,
+  "topic": "finance",
+  "query": "How does the Federal Reserve control inflation through monetary policy",
+  "run": 2
+ },
+ {
+  "subqueries": [
+   "how does the Federal Reserve use interest rates to control inflation",
+   "what are the Federal Reserve's monetary policy tools for managing inflation",
+   "how does the Federal Open Market Committee influence inflation through monetary policy"
+  ],
+  "subquery_sims": [
+   0.769,
+   0.751,
+   0.765
+  ],
+  "max_sim": 0.769,
+  "urls_proposed": 20,
+  "urls_duplicate": 10,
+  "search_overlap": 0.5,
+  "scrape_rate": 0.8,
+  "dead_searches": 1,
+  "cost": 0.0005690999999999999,
+  "topic": "finance",
+  "query": "How does the Federal Reserve control inflation through monetary policy",
+  "run": 3
+ },
+ {
+  "subqueries": [
+   "how does the Federal Reserve use interest rates to control inflation",
+   "what monetary policy tools does the Federal Reserve employ to manage inflation",
+   "impact of Federal Reserve's monetary policy on inflation and economic stability"
+  ],
+  "subquery_sims": [
+   0.769,
+   0.752,
+   0.705
+  ],
+  "max_sim": 0.769,
+  "urls_proposed": 20,
+  "urls_duplicate": 6,
+  "search_overlap": 0.3,
+  "scrape_rate": 0.643,
+  "dead_searches": 0,
+  "cost": 0.0005815600000000001,
+  "topic": "finance",
+  "query": "How does the Federal Reserve control inflation through monetary policy",
+  "run": 4
+ },
+ {
+  "subqueries": [
+   "how does the Federal Reserve use interest rates to control inflation",
+   "what are the monetary policy tools of the Federal Reserve for managing inflation",
+   "how does the Federal Reserve's open market operations affect inflation control"
+  ],
+  "subquery_sims": [
+   0.769,
+   0.724,
+   0.673
+  ],
+  "max_sim": 0.769,
+  "urls_proposed": 20,
+  "urls_duplicate": 5,
+  "search_overlap": 0.25,
+  "scrape_rate": 0.667,
+  "dead_searches": 0,
+  "cost": 0.00066234,
+  "topic": "finance",
+  "query": "How does the Federal Reserve control inflation through monetary policy",
+  "run": 5
+ }
+]

@@ -1,0 +1,162 @@
+{
+  "fractions": [
+    0.0,
+    0.25,
+    0.5,
+    0.75,
+    1.0
+  ],
+  "grader": "gpt-4-turbo",
+  "metrics": [
+    {
+      "metric": "citation_faithfulness",
+      "increasing": false,
+      "mae_raw": 0.109,
+      "mae_norm": 0.109,
+      "n": 15,
+      "trajectories": {
+        "medical": [
+          1.0,
+          1.0,
+          0.667,
+          0.5,
+          0.0
+        ],
+        "ai_tech": [
+          1.0,
+          1.0,
+          0.571,
+          0.286,
+          0.0
+        ],
+        "legal": [
+          1.0,
+          1.0,
+          0.778,
+          0.333,
+          0.0
+        ]
+      }
+    },
+    {
+      "metric": "source_diversity",
+      "increasing": false,
+      "mae_raw": 0.06523351807864874,
+      "mae_norm": 0.045282401482859044,
+      "n": 15,
+      "trajectories": {
+        "medical": [
+          0.75,
+          0.65,
+          0.55,
+          0.3,
+          0.05
+        ],
+        "ai_tech": [
+          0.842,
+          0.632,
+          0.421,
+          0.316,
+          0.053
+        ],
+        "legal": [
+          1.0,
+          0.833,
+          0.556,
+          0.278,
+          0.056
+        ]
+      }
+    },
+    {
+      "metric": "source_authority",
+      "increasing": false,
+      "mae_raw": 0.1685603477270731,
+      "mae_norm": 0.05799637750590019,
+      "n": 15,
+      "trajectories": {
+        "medical": [
+          0.825,
+          0.69,
+          0.52,
+          0.403,
+          0.205
+        ],
+        "ai_tech": [
+          0.511,
+          0.426,
+          0.384,
+          0.321,
+          0.205
+        ],
+        "legal": [
+          0.661,
+          0.65,
+          0.383,
+          0.228,
+          0.2
+        ]
+      }
+    },
+    {
+      "metric": "subtopic_coverage",
+      "increasing": false,
+      "mae_raw": 0.2015907429015947,
+      "mae_norm": 0.1223390295059561,
+      "n": 15,
+      "trajectories": {
+        "medical": [
+          0.857,
+          0.857,
+          0.571,
+          0.429,
+          0.429
+        ],
+        "ai_tech": [
+          1.0,
+          0.857,
+          0.571,
+          0.286,
+          0.143
+        ],
+        "legal": [
+          0.857,
+          0.571,
+          0.714,
+          0.571,
+          0.571
+        ]
+      }
+    },
+    {
+      "metric": "unsupported_claim",
+      "increasing": true,
+      "mae_raw": 0.2,
+      "mae_norm": 0.2,
+      "n": 15,
+      "trajectories": {
+        "medical": [
+          0.75,
+          0.75,
+          0.875,
+          0.875,
+          1.0
+        ],
+        "ai_tech": [
+          0.875,
+          0.875,
+          0.875,
+          0.875,
+          1.0
+        ],
+        "legal": [
+          0.8,
+          0.8,
+          0.9,
+          0.9,
+          0.9
+        ]
+      }
+    }
+  ]
+}
