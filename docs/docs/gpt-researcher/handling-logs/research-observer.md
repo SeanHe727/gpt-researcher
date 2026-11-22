@@ -36,9 +36,22 @@ suppressed so telemetry cannot interrupt or change a research run.
 | `content_prefetched` | `query`, `provider`, `url`, `rank`, `content_length` | A provider supplied content that did not require scraping. |
 | `fetch_succeeded` | `url`, `scraper`, `content_length` | A scraper produced a retained row. |
 | `fetch_failed` | `url`, `scraper`, `content_length`, `reason_code` | A scraper failure was observed before the row was discarded. |
+| `context_compressed` | `query`, `pages`, `input_length`, `content_length` | Fetched pages were filtered down to the context kept for a query. |
+| `context_assembled` | `query`, `parts`, `separator` | Web research joined its per-query contexts. `parts` lists `query`, `source` (`initial_results` or `sub_query`) and `content_length` of each non-empty piece, in join order. |
+| `subtopics_generated` | `query`, `subtopics` | Subtopics were generated for a detailed report. |
+| `deep_level_planned` | `query`, `depth`, `breadth`, `queries` | Deep research planned one level; `queries` lists each `query` and `research_goal`. |
+| `deep_branch_completed` | `query`, `research_goal`, `learnings`, `follow_up_questions` | Deep research summarised one branch. |
+
+Researchers that deep research creates for its branches report to the same
+observer as the researcher that started it.
+
+`context_assembled` carries lengths, not text. To attribute the context
+returned by `conduct_research()` to the queries that produced it, split it in
+order: each part is `content_length` characters, followed by `separator`.
 
 Event payloads do not contain fetched page bodies, snippets, headers, cookies,
-or credentials. Query and URL fields can contain user or source information;
+or credentials. Deep research `learnings` and `follow_up_questions` are text
+the model wrote from fetched pages, not the pages themselves. Query and URL fields can contain user or source information;
 observers that export or persist events are responsible for applying their own
 access control, redaction, and retention policy.
 

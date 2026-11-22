@@ -427,8 +427,31 @@ class ResearchConductor:
                 ]
             )
             self.logger.info(f"Gathered context from {len(context)} sub-queries")
+            parts = [
+                {"query": query, "source": "initial_results", "content": initial_context},
+                *(
+                    {"query": sub_query, "source": "sub_query", "content": sub_context}
+                    for sub_query, sub_context in zip(sub_queries, context)
+                ),
+            ]
             # Filter out empty results and join the context
             context = [c for c in [initial_context, *context] if c]
+            # Lengths and order of the joined pieces, so a consumer can map
+            # the returned context back to the query that produced each one.
+            await self._emit_research_event(
+                "context_assembled",
+                query=query,
+                parts=[
+                    {
+                        "query": part["query"],
+                        "source": part["source"],
+                        "content_length": len(str(part["content"])),
+                    }
+                    for part in parts
+                    if part["content"]
+                ],
+                separator=" ",
+            )
             if context:
                 combined_context = " ".join(context)
                 self.logger.info(f"Combined context size: {len(combined_context)}")

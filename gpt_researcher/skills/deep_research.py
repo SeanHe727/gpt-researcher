@@ -11,6 +11,7 @@ from gpt_researcher.llm_provider.generic.base import ReasoningEfforts
 from ..utils.llm import create_chat_completion
 from ..utils.enum import ReportType, ReportSource, Tone
 from ..actions.query_processing import get_search_results
+from ..observability import emit_research_event
 
 logger = logging.getLogger(__name__)
 
@@ -269,6 +270,12 @@ class DeepResearchSkill:
         self.research_sources = []  # Track all research sources
         self.context = []  # Track all context
 
+    async def _emit_research_event(self, event: str, **fields) -> None:
+        """Emit through the researcher's optional observer."""
+        await emit_research_event(
+            getattr(self.researcher, "research_observer", None), event, **fields
+        )
+
     async def generate_search_queries(self, query: str, num_queries: int = 3) -> List[Dict[str, str]]:
         """Generate SERP queries for research"""
         messages = [
@@ -428,6 +435,16 @@ Return ONLY a JSON object using this exact schema:
         serp_queries = await self.generate_search_queries(query, num_queries=breadth)
         print(f"✅ Generated {len(serp_queries)} queries: {[q['query'] for q in serp_queries]}", flush=True)
         progress.total_queries = len(serp_queries)
+        await self._emit_research_event(
+            "deep_level_planned",
+            query=query,
+            depth=depth,
+            breadth=breadth,
+            queries=[
+                {"query": q.get("query"), "research_goal": q.get("researchGoal")}
+                for q in serp_queries
+            ],
+        )
         if not serp_queries:
             logger.warning("Deep research generated zero search queries; stopping descent.")
             return {
@@ -460,7 +477,9 @@ Return ONLY a JSON object using this exact schema:
                         visited_urls=self.visited_urls,
                         # Propagate MCP configuration to nested researchers
                         mcp_configs=self.researcher.mcp_configs,
-                        mcp_strategy=self.researcher.mcp_strategy
+                        mcp_strategy=self.researcher.mcp_strategy,
+                        # Nested researchers report to the same observer
+                        research_observer=getattr(self.researcher, "research_observer", None),
                     )
 
                     # Conduct research
@@ -475,6 +494,13 @@ Return ONLY a JSON object using this exact schema:
                     results = await self.process_research_results(
                         query=serp_query['query'],
                         context=context
+                    )
+                    await self._emit_research_event(
+                        "deep_branch_completed",
+                        query=serp_query['query'],
+                        research_goal=serp_query.get('researchGoal'),
+                        learnings=list(results.get('learnings') or []),
+                        follow_up_questions=list(results.get('followUpQuestions') or []),
                     )
 
                     # Update progress

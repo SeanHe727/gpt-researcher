@@ -15,6 +15,7 @@ from ..actions import (
     write_report_introduction,
 )
 from ..utils.llm import construct_subtopics
+from ..observability import emit_research_event
 
 
 class ReportGenerator:
@@ -228,6 +229,15 @@ class ReportGenerator:
             subtopics=self.researcher.subtopics,
             prompt_family=self.researcher.prompt_family,
             **self.researcher.kwargs
+        )
+        await emit_research_event(
+            getattr(self.researcher, "research_observer", None),
+            "subtopics_generated",
+            query=self.researcher.query,
+            subtopics=[
+                getattr(item, "task", item)
+                for item in (getattr(subtopics, "subtopics", subtopics) or [])
+            ],
         )
 
         if self.researcher.verbose:

@@ -215,3 +215,149 @@ async def test_search_emits_candidates_empty_failure_and_deduplication():
         fields for event, fields in events if event == "candidate_deduplicated"
     )
     assert deduplicated["url"] == "https://seen.test"
+
+
+def _recording_observer():
+    events = []
+
+    async def observer(event, **fields):
+        events.append((event, fields))
+
+    return events, observer
+
+
+@pytest.mark.asyncio
+async def test_context_compression_reports_sizes_without_content():
+    from gpt_researcher.skills.context_manager import ContextManager
+
+    events, observer = _recording_observer()
+    researcher = SimpleNamespace(
+        verbose=False,
+        websocket=None,
+        cfg=SimpleNamespace(),
+        prompt_family=None,
+        add_costs=lambda cost: None,
+        memory=SimpleNamespace(get_embeddings=lambda: None),
+        research_observer=observer,
+    )
+    pages = [{"url": "https://a.test", "raw_content": "x" * 30},
+             {"url": "https://b.test", "raw_content": "y" * 20}]
+
+    with patch(
+        "gpt_researcher.skills.context_manager.select_context",
+        AsyncMock(return_value="selected text"),
+    ):
+        context = await ContextManager(researcher).get_similar_content_by_query("q", pages)
+
+    assert context == "selected text"
+    assert events == [("context_compressed", {
+        "query": "q", "pages": 2, "input_length": 50, "content_length": 13,
+    })]
+
+
+@pytest.mark.asyncio
+async def test_context_assembled_maps_joined_context_back_to_queries():
+    events, observer = _recording_observer()
+    researcher = SimpleNamespace(
+        retrievers=[],
+        cfg=SimpleNamespace(),
+        mcp_strategy=None,
+        report_type="research_report",
+        verbose=False,
+        websocket=None,
+        research_observer=observer,
+    )
+    conductor = ResearchConductor(researcher)
+    by_query = {"sub 1": "alpha", "sub 2": "", "question": "gamma gamma"}
+    conductor._get_initial_search_results = AsyncMock(return_value=[{"href": "https://a.test"}])
+    conductor.plan_research = AsyncMock(return_value=["sub 1", "sub 2"])
+    conductor._get_context_from_initial_results = AsyncMock(return_value="initial")
+    conductor._process_sub_query = AsyncMock(side_effect=lambda q, *a: by_query[q])
+
+    context = await conductor._get_context_by_web_search("question")
+
+    (event, fields), = [e for e in events if e[0] == "context_assembled"]
+    assert fields["query"] == "question"
+    assert [(p["query"], p["source"]) for p in fields["parts"]] == [
+        ("question", "initial_results"), ("sub 1", "sub_query"), ("question", "sub_query"),
+    ]
+    # The lengths and separator recover each piece of the returned context.
+    pieces, start = [], 0
+    for part in fields["parts"]:
+        pieces.append(context[start:start + part["content_length"]])
+        start += part["content_length"] + len(fields["separator"])
+    assert pieces == ["initial", "alpha", "gamma gamma"]
+    assert all("content" not in p for p in fields["parts"])
+
+
+@pytest.mark.asyncio
+async def test_deep_research_reports_levels_and_shares_the_observer():
+    from gpt_researcher.skills.deep_research import DeepResearchSkill
+
+    events, observer = _recording_observer()
+    created = []
+
+    class FakeResearcher:
+        def __init__(self, **kwargs):
+            created.append(kwargs)
+            self.visited_urls = set()
+            self.research_sources = []
+
+        async def conduct_research(self):
+            return "context"
+
+        def get_costs(self):
+            return 0.0
+
+    skill = DeepResearchSkill.__new__(DeepResearchSkill)
+    skill.researcher = SimpleNamespace(
+        research_observer=observer, mcp_configs=None, mcp_strategy=None,
+        add_costs=lambda cost: None,
+    )
+    skill.concurrency_limit = 1
+    skill.tone = None
+    skill.websocket = None
+    skill.config_path = None
+    skill.headers = {}
+    skill.visited_urls = set()
+    skill.context = []
+    skill.research_sources = []
+    skill.generate_search_queries = AsyncMock(
+        return_value=[{"query": "branch", "researchGoal": "goal"}])
+    skill.process_research_results = AsyncMock(return_value={
+        "learnings": ["a learning"], "followUpQuestions": ["next?"], "citations": {}})
+
+    with patch("gpt_researcher.GPTResearcher", FakeResearcher):
+        await skill.deep_research("root", breadth=1, depth=1)
+
+    assert created[0]["research_observer"] is observer
+    assert events == [
+        ("deep_level_planned", {
+            "query": "root", "depth": 1, "breadth": 1,
+            "queries": [{"query": "branch", "research_goal": "goal"}],
+        }),
+        ("deep_branch_completed", {
+            "query": "branch", "research_goal": "goal",
+            "learnings": ["a learning"], "follow_up_questions": ["next?"],
+        }),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_subtopic_generation_reports_the_subtopics():
+    from gpt_researcher.skills.writer import ReportGenerator
+    from gpt_researcher.utils.validators import Subtopic, Subtopics
+
+    events, observer = _recording_observer()
+    generator = ReportGenerator.__new__(ReportGenerator)
+    generator.researcher = SimpleNamespace(
+        verbose=False, websocket=None, query="topic", context=[], cfg=None,
+        subtopics=[], prompt_family=None, kwargs={}, research_observer=observer,
+    )
+    result = Subtopics(subtopics=[Subtopic(task="one"), Subtopic(task="two")])
+
+    with patch("gpt_researcher.skills.writer.construct_subtopics",
+               AsyncMock(return_value=result)):
+        assert await generator.get_subtopics() is result
+
+    assert events == [("subtopics_generated", {"query": "topic", "subtopics": ["one", "two"]})]
