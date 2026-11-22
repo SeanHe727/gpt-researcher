@@ -5,9 +5,10 @@ Adapted for GPT-Researcher from OpenAI's simple-evals
 
 import os
 import re
+import csv
 import json
-import pandas
 import random
+from pathlib import Path
 from typing import Dict, List, Any
 from langchain_openai import ChatOpenAI
 
@@ -97,16 +98,34 @@ CHOICE_LETTERS = ["A", "B", "C"]
 CHOICE_STRINGS = ["CORRECT", "INCORRECT", "NOT_ATTEMPTED"]
 CHOICE_LETTER_TO_STRING = dict(zip(CHOICE_LETTERS, CHOICE_STRINGS))
 
+PROBLEMS_FILE = Path(__file__).parent / "problems" / "Simple QA Test Set.csv"
+
+
+def parse_grade(response_text: str) -> str | None:
+    """Map a grader reply to CORRECT / INCORRECT / NOT_ATTEMPTED, or None.
+
+    The grader is asked for a bare letter but sometimes adds punctuation
+    ("A.") or answers with the word itself. Words are matched whole: a
+    substring test would read "INCORRECT" as CORRECT, since it contains it.
+    """
+    text = (response_text or "").strip().upper()
+    letter = re.fullmatch(r"\(?([ABC])\)?[.:]?", text)
+    if letter:
+        return CHOICE_LETTER_TO_STRING[letter.group(1)]
+    words = set(re.findall(r"NOT[ _]ATTEMPTED|INCORRECT|CORRECT", text))
+    words = {w.replace(" ", "_") for w in words}
+    return words.pop() if len(words) == 1 else None
+
 
 class SimpleQAEval:
     def __init__(self, grader_model, num_examples=1):
         """Initialize the evaluator with a grader model and number of examples."""
         self.grader_model = grader_model
         
-        # Load all examples from CSV
-        csv_url = "https://openaipublic.blob.core.windows.net/simple-evals/simple_qa_test_set.csv"
-        df = pandas.read_csv(csv_url)
-        all_examples = df.to_dict('records')
+        # Load all examples from the copy of the test set kept in the repo
+        # (problems/), so the benchmark cannot change underneath a run.
+        with open(PROBLEMS_FILE, encoding="utf-8", newline="") as f:
+            all_examples = list(csv.DictReader(f))
         
         # Randomly select num_examples without replacement
         if num_examples > len(all_examples):
@@ -156,17 +175,11 @@ class SimpleQAEval:
         
         messages = [{"role": "user", "content": prompt}]
         response = self.grader_model.invoke(messages)
-        response_text = response.content.strip()
-        
-        # Convert letter response to grade string
-        if response_text in CHOICE_LETTERS:
-            grade = CHOICE_LETTER_TO_STRING[response_text]
-        else:
-            # Fallback for direct string responses
-            for grade in CHOICE_STRINGS:
-                if grade in response_text:
-                    return grade
-            grade = "NOT_ATTEMPTED"  # Default if no grade found
-            
+        grade = parse_grade(response.content)
+        if grade is None:
+            print(f"Warning: could not parse grader response {response.content!r}; "
+                  f"recording NOT_ATTEMPTED")
+            grade = "NOT_ATTEMPTED"
+
         print(f"\nGrade: {grade}")
         return grade 
