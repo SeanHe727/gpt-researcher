@@ -211,13 +211,17 @@ Two tools complement `run_eval.py` (shared metric logic lives in `metrics.py`):
 - **`benchmark.py`** — runs multiple researcher configurations (single- vs. multi-agent × model) over a fixed topic set and prints a side-by-side table. `--compare LOG_A LOG_B` diffs two past runs; `--summary-only` re-prints from saved logs.
 - **`perturbation.py`** — a behavioral test that deliberately degrades a report (remove inline citations, swap sources to low-authority, corrupt claims) and checks each metric responds monotonically. This validates metric *reliability* (directional sensitivity), which is separate from whether a metric captures *quality*.
 
+**Judge model.** The LLM-judged metrics use the judge defined in [`evals/judge.py`](judge.py), shared by `run_eval.py` and `benchmark.py`. Override it per run with `EVAL_JUDGE_MODEL` (environment or `.env`); each log records it as `judge_model`, next to the `worker_model` that wrote the reports.
+
+**Pipeline funnel.** Both runners pass a `PipelineProbe` to GPTResearcher as its `research_observer` ([research observer](../docs/docs/gpt-researcher/handling-logs/research-observer.md)) and log how many URLs each stage proposed, de-duplicated, fetched and lost. Source-quality metrics score the pages that actually loaded (`sources_basis: "scraped"`), not every URL the retriever proposed.
+
 ### Running
 
 ```bash
 # Run all 6 metrics (most expensive, ~$0.06/query)
 python -m evals.quality_eval.run_eval --num_examples 5
 
-# Zero-cost only (citation ratio, diversity, authority)
+# Zero-cost only (citation faithfulness, diversity, authority)
 python -m evals.quality_eval.run_eval --num_examples 10 --no-subtopic --no-hallucination --no-unsupported-claim
 
 # Skip individual LLM metrics selectively
@@ -229,6 +233,8 @@ python -m evals.quality_eval.run_eval --num_examples 10 --no-unsupported-claim
 Logs are saved to `evals/quality_eval/logs/quality_eval_YYYY-MM-DD_HH-MM-SS_n{N}.jsonl`.
 
 ### Example Output
+
+The numbers below are illustrative and predate the evidence-window fix (`CONTEXT_CHARS`), so the claim scores in particular are lower than a current run gives.
 
 ```text
 Quality eval: 5 queries  subtopic=off  hallucination=off  unsupported_claim=on
